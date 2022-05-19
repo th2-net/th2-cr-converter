@@ -1,0 +1,70 @@
+plugins {
+    id "io.gitlab.arturbosch.detekt" version "${kotlin_detekt_version}"
+    id 'org.jetbrains.kotlin.jvm' version "${kotlin_version}"
+}
+
+apply plugin: 'kotlin'
+apply plugin: 'application'
+
+group = 'com.exactpro.th2'
+version = release_version
+
+sourceCompatibility = 11
+targetCompatibility = 11
+
+repositories {
+    mavenCentral()
+}
+
+jar {
+    manifest {
+        attributes(
+                'Created-By': "${System.getProperty('java.version')} (${System.getProperty('java.vendor')})",
+                'Specification-Title': '',
+                'Specification-Vendor': 'Exactpro Systems LLC',
+                'Implementation-Title': project.archivesBaseName,
+                'Implementation-Vendor': 'Exactpro Systems LLC',
+                'Implementation-Vendor-Id': 'com.exactpro',
+                'Implementation-Version': project.version
+        )
+    }
+}
+
+dependencies {
+
+    implementation 'org.slf4j:slf4j-api:1.7.32'
+    implementation 'org.apache.logging.log4j:log4j-slf4j-impl:2.17.1'
+//
+//    implementation 'org.slf4j:slf4j-log4j12'
+//    implementation 'org.slf4j:slf4j-api'
+
+
+    implementation group: 'org.jetbrains.kotlin', name: 'kotlin-stdlib-jdk8', version: kotlin_version
+    implementation group: 'org.jetbrains.kotlin', name: 'kotlin-reflect', version: kotlin_version
+    implementation group: 'io.github.microutils', name: 'kotlin-logging', version: kotlin_logging_version
+
+    testImplementation "org.junit.jupiter:junit-jupiter:5.6.2"
+    testImplementation group: 'org.jetbrains.kotlin', name: 'kotlin-test-junit5', version: kotlin_version
+    implementation group: 'com.fasterxml.jackson.module', name: 'jackson-module-kotlin', version: jackson_module_kotlin_version
+    detektPlugins("io.gitlab.arturbosch.detekt:detekt-formatting:${kotlin_detekt_version}")
+}
+
+test {
+    useJUnitPlatform()
+}
+
+//application {
+//    mainClassName 'com.exactpro.th2.codec.MainKt'
+//}
+
+compileKotlin {
+    kotlinOptions {
+        jvmTarget = "11"
+    }
+}
+
+compileTestKotlin {
+    kotlinOptions {
+        jvmTarget = "11"
+    }
+}
