@@ -1,6 +1,16 @@
 plugins {
+    id "org.springframework.boot" version "${springframework_version}"
     id "io.gitlab.arturbosch.detekt" version "${kotlin_detekt_version}"
-    id 'org.jetbrains.kotlin.jvm' version "${kotlin_version}"
+    id "org.jetbrains.kotlin.jvm" version "${kotlin_version}"
+}
+
+ext {
+    kotlin_logging_version = '2.0.10'
+    jackson_module_kotlin_version = '2.13.2'
+    infra_repo_version = '1.1.7-checkstyle-2385157657-SNAPSHOT'
+    slf4j_api_version = '1.7.36'
+    slf4j_impl_version = '2.17.2'
+    junit_jupiter_version = '5.8.2'
 }
 
 apply plugin: 'kotlin'
@@ -9,14 +19,27 @@ apply plugin: 'application'
 group = 'com.exactpro.th2'
 version = release_version
 
-sourceCompatibility = 11
-targetCompatibility = 11
+configurations.all {
+    exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
+    exclude group: 'org.springframework.boot', module: 'logback-classic'
+}
 
 repositories {
     mavenCentral()
+
+    maven {
+        name 'Sonatype_snapshots'
+        url 'https://s01.oss.sonatype.org/content/repositories/snapshots/'
+    }
+
+    maven {
+        name 'Sonatype_releases'
+        url 'https://s01.oss.sonatype.org/content/repositories/releases/'
+    }
 }
 
 jar {
+    enabled = false
     manifest {
         attributes(
                 'Created-By': "${System.getProperty('java.version')} (${System.getProperty('java.vendor')})",
@@ -31,31 +54,41 @@ jar {
 }
 
 dependencies {
+    implementation platform("org.springframework.boot:spring-boot-dependencies:$springframework_version")
+    implementation "org.springframework.boot:spring-boot-starter-actuator"
+    implementation "org.springframework.boot:spring-boot-starter-web"
 
-    implementation 'org.slf4j:slf4j-api:1.7.32'
-    implementation 'org.apache.logging.log4j:log4j-slf4j-impl:2.17.1'
-//
-//    implementation 'org.slf4j:slf4j-log4j12'
-//    implementation 'org.slf4j:slf4j-api'
+    implementation "org.slf4j:slf4j-api:$slf4j_api_version"
+    implementation "org.apache.logging.log4j:log4j-slf4j-impl:$slf4j_impl_version"
 
+    implementation "com.exactpro.th2:infra-repo:$infra_repo_version"
 
     implementation group: 'org.jetbrains.kotlin', name: 'kotlin-stdlib-jdk8', version: kotlin_version
     implementation group: 'org.jetbrains.kotlin', name: 'kotlin-reflect', version: kotlin_version
     implementation group: 'io.github.microutils', name: 'kotlin-logging', version: kotlin_logging_version
 
-    testImplementation "org.junit.jupiter:junit-jupiter:5.6.2"
-    testImplementation group: 'org.jetbrains.kotlin', name: 'kotlin-test-junit5', version: kotlin_version
+    implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.11.1"
+    implementation 'org.apache.commons:commons-text:1.9'
     implementation group: 'com.fasterxml.jackson.module', name: 'jackson-module-kotlin', version: jackson_module_kotlin_version
-    detektPlugins("io.gitlab.arturbosch.detekt:detekt-formatting:${kotlin_detekt_version}")
+
+    testImplementation "org.junit.jupiter:junit-jupiter:$junit_jupiter_version"
+    testImplementation group: 'org.jetbrains.kotlin', name: 'kotlin-test-junit5', version: kotlin_version
+    testImplementation('org.springframework.boot:spring-boot-starter-test') {
+        exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
+    }
+
+    detektPlugins("io.gitlab.arturbosch.detekt:detekt-formatting:$kotlin_detekt_version")
+}
+
+detekt {
+    buildUponDefaultConfig = true
+    autoCorrect = true
+    config = files("$rootDir/config/detekt/detekt.yml")
 }
 
 test {
     useJUnitPlatform()
 }
-
-//application {
-//    mainClassName 'com.exactpro.th2.codec.MainKt'
-//}
 
 compileKotlin {
     kotlinOptions {
