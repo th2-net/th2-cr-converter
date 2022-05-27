@@ -36,9 +36,10 @@ data class GenericBoxSpec(
     val mqRouter: Map<String, Any>?,
     val grpcRouter: Map<String, Any>?,
     val cradleManager: Map<String, Any>?,
-    val disabled: Boolean?
+    val disabled: Boolean?,
+    val bookName: String? = null
 ) : Convertible {
     override fun toNextVersion(): Convertible {
-        TODO("Not yet implemented")
+        throw AssertionError("THis is the latest version. Further conversions are not supported")
     }
 }
