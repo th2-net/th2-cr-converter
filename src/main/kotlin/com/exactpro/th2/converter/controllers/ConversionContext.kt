@@ -16,19 +16,9 @@
 
 package com.exactpro.th2.converter.controllers
 
-import com.exactpro.th2.converter.Mapper.YAML_MAPPER
 import com.exactpro.th2.converter.model.Th2Resource
 
 data class ConversionContext(
     val alreadyUpToVersionResources: MutableList<Th2Resource> = ArrayList(),
     val convertedResources: MutableList<Th2Resource> = ArrayList()
-) {
-    fun print() {
-        for (res in alreadyUpToVersionResources) {
-            println(YAML_MAPPER.writeValueAsString(res))
-        }
-        for (res in convertedResources) {
-            println(YAML_MAPPER.writeValueAsString(res))
-        }
-    }
-}
+)
