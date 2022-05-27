@@ -24,6 +24,6 @@ data class GenericLinkSpec(
     val multiDictionariesRelation: List<MultiDictionariesRelation>?
 ) : Convertible {
     override fun toNextVersion(): Convertible {
-        TODO("Not yet implemented")
+        throw AssertionError("THis is the latest version. Further conversions are not supported")
     }
 }
