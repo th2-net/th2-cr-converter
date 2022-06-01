@@ -34,7 +34,7 @@ data class ExtendedSettingsV1(
     val externalBox: ExternalBox?,
     val hostNetwork: Boolean?,
     val nodeSelector: Map<String, String>?,
-    val mounting: Mounting?,
+    val mounting: List<Mounting>?,
     val resources: Resources?,
     val service: Service?
 ) {
