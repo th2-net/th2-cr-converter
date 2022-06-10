@@ -21,7 +21,6 @@ import com.exactpro.th2.converter.model.latest.box.extendedsettings.ExtendedSett
 import com.exactpro.th2.converter.model.latest.box.extendedsettings.ExternalBox
 import com.exactpro.th2.converter.model.latest.box.extendedsettings.Mounting
 import com.exactpro.th2.converter.model.latest.box.extendedsettings.Resources
-import com.exactpro.th2.converter.model.latest.box.extendedsettings.Service
 import com.exactpro.th2.converter.model.latest.box.extendedsettings.SharedMemory
 import com.fasterxml.jackson.annotation.JsonProperty
 
@@ -36,7 +35,7 @@ data class ExtendedSettingsV1(
     val nodeSelector: Map<String, String>?,
     val mounting: List<Mounting>?,
     val resources: Resources?,
-    val service: Service?
+    val service: ServiceV1?
 ) {
     fun toExtendedSettings(): ExtendedSettings {
         return ExtendedSettings(
@@ -50,7 +49,7 @@ data class ExtendedSettingsV1(
             nodeSelector,
             mounting,
             resources,
-            service
+            service?.toService()
         )
     }
 }

@@ -18,7 +18,6 @@ package com.exactpro.th2.converter.controllers
 
 import com.exactpro.th2.converter.config.ApplicationConfig
 import com.exactpro.th2.converter.controllers.errors.NotAcceptableException
-import com.exactpro.th2.converter.model.Th2Resource
 import com.exactpro.th2.converter.util.Converter.convertFromGit
 import com.exactpro.th2.converter.util.Converter.convertFromRequest
 import com.exactpro.th2.converter.util.ProjectConstants
@@ -108,7 +107,7 @@ class ConverterController {
     fun convertRequestedResources(
         @PathVariable targetVersion: String,
         @RequestBody resources: Set<RepositoryResource>
-    ): List<Th2Resource> {
+    ): List<String> {
         checkRequestedVersion(targetVersion)
         return convertFromRequest(targetVersion, resources)
     }

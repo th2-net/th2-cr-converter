@@ -16,9 +16,6 @@
 
 package com.exactpro.th2.converter.model.latest.box
 
-import com.fasterxml.jackson.annotation.JsonInclude
-
-@JsonInclude(JsonInclude.Include.NON_NULL)
 data class Prometheus(
     val enabled: Boolean?,
     val host: String?,

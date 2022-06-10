@@ -27,6 +27,7 @@ import com.exactpro.th2.converter.model.latest.box.GenericBoxSpec
 import com.exactpro.th2.converter.model.latest.link.GenericLinkSpec
 import com.exactpro.th2.converter.model.v1.box.GenericBoxSpecV1
 import com.exactpro.th2.converter.model.v1.link.GenericLinkSpecV1
+import com.exactpro.th2.converter.util.Mapper.YAML_MAPPER
 import com.exactpro.th2.converter.util.ProjectConstants.SHORT_API_VERSION_V2
 import com.exactpro.th2.infrarepo.ResourceType
 import com.exactpro.th2.infrarepo.git.GitterContext
@@ -68,7 +69,7 @@ object Converter {
     fun convertFromRequest(
         version: String,
         resources: Set<RepositoryResource>
-    ): MutableList<Th2Resource> {
+    ): List<String> {
         val conversionContext = ConversionContext()
         val response = ConverterControllerResponse()
         when (version) {
@@ -88,7 +89,7 @@ object Converter {
             }
             else -> throw NotAcceptableException("Conversion to specified version: '$version' is not supported")
         }
-        return conversionContext.convertedResources
+        return conversionContext.convertedResources.map { YAML_MAPPER.writeValueAsString(it) }
     }
 
     private inline fun <reified From : Convertible, reified Target : Convertible> convert(
