@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.exactpro.th2.converter
+package com.exactpro.th2.converter.util
 
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.core.JsonParser

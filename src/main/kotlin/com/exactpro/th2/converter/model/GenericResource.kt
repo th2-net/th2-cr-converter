@@ -16,8 +16,8 @@
 
 package com.exactpro.th2.converter.model
 
-import com.exactpro.th2.converter.ProjectConstants.API_VERSION_V2
 import com.exactpro.th2.converter.model.latest.Th2Metadata
+import com.exactpro.th2.converter.util.ProjectConstants.API_VERSION_V2
 
 data class GenericResource<T : Convertible>(
     private val apiVersion: String,

@@ -16,6 +16,6 @@
 
 package com.exactpro.th2.converter.controllers.errors
 
-open class ServiceException(statusCode: Int, message: String?) : RuntimeException() {
+open class ServiceException(statusCode: Int, message: String?) : RuntimeException(message) {
     val errorResponse = ErrorResponse(statusCode, message)
 }

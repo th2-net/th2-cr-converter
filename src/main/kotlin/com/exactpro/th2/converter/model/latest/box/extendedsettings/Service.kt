@@ -16,6 +16,9 @@
 
 package com.exactpro.th2.converter.model.latest.box.extendedsettings
 
+import com.fasterxml.jackson.annotation.JsonInclude
+
+@JsonInclude(JsonInclude.Include.NON_NULL)
 data class Service(
     val enabled: Boolean?,
     val endpoints: List<ServiceEndpoint>?,
@@ -23,6 +26,7 @@ data class Service(
     val ingress: Ingress?
 )
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 data class ServiceEndpoint(
     val name: String,
     val nodePort: Int?,
