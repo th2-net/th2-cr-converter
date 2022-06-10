@@ -16,22 +16,22 @@
 
 package com.exactpro.th2.converter.model.latest.box.extendedsettings
 
-import com.fasterxml.jackson.annotation.JsonInclude
-
-@JsonInclude(JsonInclude.Include.NON_NULL)
 data class Service(
     val enabled: Boolean?,
-    val endpoints: List<ServiceEndpoint>?,
-    val type: String?,
+    val nodePort: List<NodePortConfig>?,
+    val clusterIP: List<ClusterIpConfig>?,
     val ingress: Ingress?
 )
 
-@JsonInclude(JsonInclude.Include.NON_NULL)
-data class ServiceEndpoint(
+data class NodePortConfig(
     val name: String,
-    val nodePort: Int?,
-    val targetPort: Int?,
-    val port: Int?
+    val containerPort: Int?,
+    val exposedPort: Int?
+)
+
+data class ClusterIpConfig(
+    val name: String,
+    val containerPort: Int?,
 )
 
 data class Ingress(

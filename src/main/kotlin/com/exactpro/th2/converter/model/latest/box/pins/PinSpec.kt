@@ -17,9 +17,7 @@
 package com.exactpro.th2.converter.model.latest.box.pins
 
 import com.fasterxml.jackson.annotation.JsonIgnore
-import com.fasterxml.jackson.annotation.JsonInclude
 
-@JsonInclude(JsonInclude.Include.NON_NULL)
 data class PinSpec(
     val mq: List<MqPin>?,
     val grpc: GrpcSection?
@@ -30,7 +28,6 @@ data class PinSpec(
     }
 }
 
-@JsonInclude(JsonInclude.Include.NON_NULL)
 data class MqPin(
     val name: String,
 
@@ -39,7 +36,6 @@ data class MqPin(
     val settings: PinSettings?
 )
 
-@JsonInclude(JsonInclude.Include.NON_NULL)
 data class GrpcClient(
     val name: String,
     val serviceClass: String,
@@ -54,7 +50,6 @@ data class GrpcServer(
     val serviceClasses: List<String>,
 )
 
-@JsonInclude(JsonInclude.Include.NON_NULL)
 data class GrpcSection(
     val client: List<GrpcClient>?,
     val server: List<GrpcServer>?

@@ -17,9 +17,7 @@
 package com.exactpro.th2.converter.model.latest.box.extendedsettings
 
 import com.exactpro.th2.converter.model.latest.box.ChartConfig
-import com.fasterxml.jackson.annotation.JsonInclude
 
-@JsonInclude(JsonInclude.Include.NON_NULL)
 data class ExtendedSettings(
     val chartConfig: ChartConfig?,
     val envVariables: Map<String, String>?,

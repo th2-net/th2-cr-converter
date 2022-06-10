@@ -19,9 +19,6 @@ package com.exactpro.th2.converter.model.latest.box
 import com.exactpro.th2.converter.model.Convertible
 import com.exactpro.th2.converter.model.latest.box.extendedsettings.ExtendedSettings
 import com.exactpro.th2.converter.model.latest.box.pins.PinSpec
-import com.fasterxml.jackson.annotation.JsonInclude
-
-@JsonInclude(JsonInclude.Include.NON_NULL)
 
 data class GenericBoxSpec(
     // required fields
