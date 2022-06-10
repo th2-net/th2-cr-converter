@@ -16,7 +16,7 @@
 
 package com.exactpro.th2.converter.config
 
-import com.exactpro.th2.infrarepo.GitConfig
+import com.exactpro.th2.infrarepo.git.GitConfig
 
 class LocalGitConfig : GitConfig {
     private val remoteRepository: String = ""

@@ -16,7 +16,7 @@
 
 package com.exactpro.th2.converter.config
 
-import com.exactpro.th2.converter.Mapper.YAML_MAPPER
+import com.exactpro.th2.converter.util.Mapper.YAML_MAPPER
 import com.fasterxml.jackson.core.JsonParseException
 import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException
 import mu.KotlinLogging

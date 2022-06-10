@@ -14,11 +14,18 @@
  * limitations under the License.
  */
 
-package com.exactpro.th2.converter
+package com.exactpro.th2.converter.util
 
 object ProjectConstants {
     const val API_VERSION_V1 = "th2.exactpro.com/v1"
     const val API_VERSION_V2 = "th2.exactpro.com/v2"
 
     const val SHORT_API_VERSION_V2 = "v2"
+
+    val ACCEPTED_VERSIONS = listOf(SHORT_API_VERSION_V2)
+
+    const val PROPAGATION_RULE = "rule"
+    const val PROPAGATION_DENY = "deny"
+
+    const val SOURCE_BRANCH = "master"
 }

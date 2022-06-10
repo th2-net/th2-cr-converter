@@ -20,7 +20,12 @@ data class ConverterControllerResponse(
     val convertedResources: MutableList<String> = ArrayList(),
     val errorMessages: MutableList<ErrorMessage> = ArrayList(),
     var commitRef: String? = null
-)
+) {
+
+    fun hasErrors(): Boolean {
+        return errorMessages.size > 0
+    }
+}
 
 data class ErrorMessage(
     val resourceName: String,

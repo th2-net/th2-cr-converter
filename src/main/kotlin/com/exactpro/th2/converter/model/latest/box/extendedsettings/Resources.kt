@@ -16,9 +16,12 @@
 
 package com.exactpro.th2.converter.model.latest.box.extendedsettings
 
+import com.fasterxml.jackson.annotation.JsonInclude
+
+@JsonInclude(JsonInclude.Include.NON_NULL)
 data class Resources(
-    val limits: ResourceProperty,
-    val requests: ResourceProperty
+    val limits: ResourceProperty?,
+    val requests: ResourceProperty?
 )
 
 data class ResourceProperty(
