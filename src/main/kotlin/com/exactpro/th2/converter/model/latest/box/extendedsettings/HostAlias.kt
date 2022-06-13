@@ -16,19 +16,7 @@
 
 package com.exactpro.th2.converter.model.latest.box.extendedsettings
 
-import com.exactpro.th2.converter.model.latest.box.ChartConfig
-
-data class ExtendedSettings(
-    val chartConfig: ChartConfig?,
-    val envVariables: Map<String, String>?,
-    val sharedMemory: SharedMemory?,
-    val replicas: Int?,
-    val k8sProbes: Boolean?,
-    val externalBox: ExternalBox?,
-    val hostAliases: List<HostAlias>?,
-    val hostNetwork: Boolean?,
-    val nodeSelector: Map<String, String>?,
-    val mounting: List<Mounting>?,
-    val resources: Resources?,
-    val service: Service?
+data class HostAlias(
+    val ip: String,
+    val hostNames: List<String>
 )

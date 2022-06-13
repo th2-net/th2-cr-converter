@@ -45,6 +45,7 @@ data class ExtendedSettingsV1(
             replicas,
             k8sProbes,
             externalBox,
+            hostAliases = null,
             hostNetwork,
             nodeSelector,
             mounting,
