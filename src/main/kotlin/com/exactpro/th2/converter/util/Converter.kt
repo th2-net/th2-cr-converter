@@ -69,7 +69,7 @@ object Converter {
     fun convertFromRequest(
         version: String,
         resources: Set<RepositoryResource>
-    ): List<String> {
+    ): List<Th2Resource> {
         val conversionContext = ConversionContext()
         val response = ConverterControllerResponse()
         when (version) {
@@ -89,7 +89,7 @@ object Converter {
             }
             else -> throw NotAcceptableException("Conversion to specified version: '$version' is not supported")
         }
-        return conversionContext.convertedResources.map { YAML_MAPPER.writeValueAsString(it) }
+        return conversionContext.convertedResources
     }
 
     private inline fun <reified From : Convertible, reified Target : Convertible> convert(
@@ -98,11 +98,11 @@ object Converter {
         response: ConverterControllerResponse
     ) {
         for (resource in resources) {
-            val th2Metadata: Th2Metadata = Mapper.YAML_MAPPER.convertValue(resource.metadata)
+            val th2Metadata: Th2Metadata = YAML_MAPPER.convertValue(resource.metadata)
 
             if (resource.apiVersion.equals(ProjectConstants.API_VERSION_V2)) {
                 try {
-                    val spec: Target = Mapper.YAML_MAPPER.convertValue(resource.spec)
+                    val spec: Target = YAML_MAPPER.convertValue(resource.spec)
                     conversionContext.alreadyUpToVersionResources.add(
                         GenericResource(
                             resource.apiVersion,
@@ -119,7 +119,7 @@ object Converter {
             }
             if (resource.apiVersion.equals(ProjectConstants.API_VERSION_V1)) {
                 try {
-                    val specFrom: From = Mapper.YAML_MAPPER.convertValue(resource.spec)
+                    val specFrom: From = YAML_MAPPER.convertValue(resource.spec)
                     val resourceFrom = GenericResource(resource.apiVersion, resource.kind, th2Metadata, specFrom)
                     conversionContext.convertedResources.add(resourceFrom.toNextVersion())
                     response.convertedResources.add(resource.metadata.name)
