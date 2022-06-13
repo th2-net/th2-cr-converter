@@ -17,6 +17,8 @@ __Path variables:__
 
 Throws exception if conversion to the specified version is not supported, and also if requested schema doesn't exist, or is the same as master.
 
+Important: Changes won’t be committed unless the conversion of every resource is successful, i.e. there are no errors.
+
 __Returns:__
 
 `ConverterControllerResponse` object.
@@ -56,7 +58,6 @@ __Response body example:__
 }
 ```
 
-
 __POST/convert/{sourceSchemaName}/{newSchemaName}/{targetVersion}__
 
 Get files for given source schema from Git, convert them to given version. If the conversion resulted in no errors: create a new schema and push converted files to the new schema; if `k8s-propagation` for sourceSchemaName is not set to deny, set it to deny; Set `k8s-propagation` for  newSchemaName to rule.
@@ -70,7 +71,10 @@ __Path variables:__
 
 *targetVersion* - To what version schema should be converted
 
+
 Throws exception if conversion to the specified version is not supported, and also if requested schema doesn't exist, or is the same as master.
+
+Important: New schema/branch won’t be made, changes won’t be committed and k8s-propagation will be unchanged unless the conversion of every resource is successful, i.e. there are no errors.
 
 __Returns__:
 
@@ -165,7 +169,9 @@ Example:
 
 __Returns:__
 
-List of converted `Th2Resource` objects
+List of converted `Th2Resource` objects.
+
+*Note:* You can convert JSON format to YAML with [this online tool](https://onlineyamltools.com/convert-json-to-yaml), and make it more readable with [linter](http://www.yamllint.com/) if necessary.  
 
 __Response body example:__
 
