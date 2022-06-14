@@ -77,7 +77,7 @@ object RepositoryUtils {
 
     private fun handleInconsistentRepoState(gitter: Gitter, irse: InconsistentRepositoryStateException) {
         logger.error("Inconsistent repository state exception for branch \"{}\"", gitter.branch, irse)
-        val se = ServiceException(HttpStatus.INTERNAL_SERVER_ERROR.value(), irse.message)
+        val se = ServiceException(HttpStatus.INTERNAL_SERVER_ERROR, irse.message)
         se.addSuppressed(irse)
         try {
             gitter.recreateCache()
@@ -93,7 +93,7 @@ object RepositoryUtils {
             ctx.branches
         } catch (e: Exception) {
             throw ServiceException(
-                HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                HttpStatus.INTERNAL_SERVER_ERROR,
                 e.message
             )
         }

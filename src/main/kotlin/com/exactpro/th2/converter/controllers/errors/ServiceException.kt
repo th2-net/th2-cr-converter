@@ -16,6 +16,8 @@
 
 package com.exactpro.th2.converter.controllers.errors
 
-open class ServiceException(statusCode: Int, message: String?) : RuntimeException(message) {
-    val errorResponse = ErrorResponse(statusCode, message)
+import org.springframework.http.HttpStatus
+
+open class ServiceException(status: HttpStatus, message: String?) : RuntimeException(message) {
+    val errorResponse = ErrorResponse(status, message)
 }

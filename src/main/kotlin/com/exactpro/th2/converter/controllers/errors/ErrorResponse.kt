@@ -17,11 +17,18 @@
 package com.exactpro.th2.converter.controllers.errors
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import org.springframework.http.HttpStatus
 
 data class ErrorResponse(
-    @JsonProperty(STATUS_CODE) val statusCode: Int,
+    val status: HttpStatus,
     val message: String?
 ) {
+
+    @JsonProperty(STATUS_CODE)
+    fun getStatusCode(): Int {
+        return status.value()
+    }
+
     companion object {
         const val STATUS_CODE = "status_code"
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 Exactpro (Exactpro Systems Limited)
+ * Copyright 2020-2022 Exactpro (Exactpro Systems Limited)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,17 @@
 
 package com.exactpro.th2.converter.controllers.errors
 
-import org.springframework.http.HttpStatus
+import org.springframework.http.ResponseEntity
+import org.springframework.web.bind.annotation.ControllerAdvice
+import org.springframework.web.bind.annotation.ExceptionHandler
 
-class NotAcceptableException(message: String?) :
-    ServiceException(HttpStatus.NOT_ACCEPTABLE, message)
+@ControllerAdvice
+class ServiceExceptionHandler {
+
+    @ExceptionHandler(ServiceException::class)
+    fun serviceErrorResponse(e: ServiceException): ResponseEntity<ErrorResponse> {
+        val errorResponse = e.errorResponse
+
+        return ResponseEntity(errorResponse, errorResponse.status)
+    }
+}
