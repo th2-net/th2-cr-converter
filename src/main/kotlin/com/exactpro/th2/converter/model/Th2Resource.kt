@@ -17,13 +17,20 @@
 package com.exactpro.th2.converter.model
 
 import com.exactpro.th2.converter.model.latest.Th2Metadata
+import com.exactpro.th2.converter.util.ProjectConstants.API_VERSION_V2
 
-interface Th2Resource : Convertible {
-    fun getApiVersion(): String
-
-    fun getKind(): String
-
-    fun getMetadata(): Th2Metadata
-
-    fun getSpec(): Convertible
+data class Th2Resource(
+    val apiVersion: String,
+    val kind: String,
+    val metadata: Th2Metadata,
+    val spec: Convertible,
+) {
+    fun toNextVersion(): Th2Resource {
+        return Th2Resource(
+            API_VERSION_V2,
+            kind,
+            metadata,
+            spec.toNextVersion()
+        )
+    }
 }
