@@ -40,10 +40,10 @@ object RepositoryUtils {
                 Repository.update(
                     gitter,
                     RepositoryResource(
-                        convertedRes.getApiVersion(),
-                        convertedRes.getKind(),
-                        GenericResource.Metadata(convertedRes.getMetadata().name),
-                        convertedRes.getSpec()
+                        convertedRes.apiVersion,
+                        convertedRes.kind,
+                        GenericResource.Metadata(convertedRes.metadata.name),
+                        convertedRes.spec
                     )
                 )
             }

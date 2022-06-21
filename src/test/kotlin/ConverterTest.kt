@@ -16,7 +16,6 @@
 
 import com.exactpro.th2.converter.controllers.errors.NotAcceptableException
 import com.exactpro.th2.converter.model.ComparableTo
-import com.exactpro.th2.converter.model.GenericResource
 import com.exactpro.th2.converter.model.Th2Resource
 import com.exactpro.th2.converter.model.latest.Th2Metadata
 import com.exactpro.th2.converter.model.latest.box.GenericBoxSpec
@@ -90,7 +89,7 @@ internal class ConverterTest {
             val v1ResSpec: GenericBoxSpecV1 = YAML_MAPPER.convertValue(v1Res.spec)
             val v1ResPins = v1ResSpec.pins as List<PinSpecV1> // not testing null pins
 
-            val convertedResSpec = convertedTh2ResList[index].getSpec() as GenericBoxSpec
+            val convertedResSpec = convertedTh2ResList[index].spec as GenericBoxSpec
             val convertedResPins: PinSpec? = convertedResSpec.pins
 
             assertNotNull(convertedResPins, resFailMessage + "Pin conversion resulted in null")
@@ -142,12 +141,12 @@ internal class ConverterTest {
 
         val actualConvertedList = Converter.convertFromRequest("v2", sampleResSet)
         val actualConvertedScript = actualConvertedList
-            .find { it.getMetadata().name == "script" } as Th2Resource
+            .find { it.metadata.name == "script" } as Th2Resource
         var expectedConvertedScriptSpec: GenericBoxSpec? = null
         assertDoesNotThrow("script conversion v1 -> v2 failed: Spec is incorrect") {
             expectedConvertedScriptSpec = YAML_MAPPER.convertValue(scriptV2.spec)
         }
-        val expectedConvertedScript = GenericResource(
+        val expectedConvertedScript = Th2Resource(
             scriptV2.apiVersion,
             scriptV2.kind,
             Th2Metadata(scriptV2.metadata.name),
@@ -182,8 +181,8 @@ internal class ConverterTest {
     @Test
     fun testServiceConversionToV2FromRequest() {
         val convertedResList = Converter.convertFromRequest("v2", setOf(actV1, fixServerV1))
-        val convertedResMap = convertedResList.associateBy { it.getMetadata().name }
-        val actSpec = convertedResMap["act"]?.getSpec() as GenericBoxSpec
+        val convertedResMap = convertedResList.associateBy { it.metadata.name }
+        val actSpec = convertedResMap["act"]?.spec as GenericBoxSpec
         val actualActService = YAML_MAPPER.writeValueAsString(actSpec.extendedSettings?.service)
         val expectedActService = """
             enabled: true
@@ -198,7 +197,7 @@ internal class ConverterTest {
             "Service conversion in act v1 -> v2 failed"
         )
 
-        val fixServerSpec = convertedResMap["fix-server"]?.getSpec() as GenericBoxSpec
+        val fixServerSpec = convertedResMap["fix-server"]?.spec as GenericBoxSpec
         val actualFixServerService = YAML_MAPPER.writeValueAsString(fixServerSpec.extendedSettings?.service)
         val expectedFixServerService = """
             enabled: true

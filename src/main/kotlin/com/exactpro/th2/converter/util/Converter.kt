@@ -20,7 +20,6 @@ import com.exactpro.th2.converter.controllers.ConverterControllerResponse
 import com.exactpro.th2.converter.controllers.ErrorMessage
 import com.exactpro.th2.converter.controllers.errors.NotAcceptableException
 import com.exactpro.th2.converter.model.Convertible
-import com.exactpro.th2.converter.model.GenericResource
 import com.exactpro.th2.converter.model.Th2Resource
 import com.exactpro.th2.converter.model.latest.Th2Metadata
 import com.exactpro.th2.converter.model.latest.box.GenericBoxSpec
@@ -104,7 +103,7 @@ object Converter {
                 try {
                     val spec: Target = YAML_MAPPER.convertValue(resource.spec)
                     conversionContext.alreadyUpToVersionResources.add(
-                        GenericResource(
+                        Th2Resource(
                             resource.apiVersion,
                             resource.kind,
                             th2Metadata,
@@ -120,7 +119,7 @@ object Converter {
             if (resource.apiVersion.equals(ProjectConstants.API_VERSION_V1)) {
                 try {
                     val specFrom: From = YAML_MAPPER.convertValue(resource.spec)
-                    val resourceFrom = GenericResource(resource.apiVersion, resource.kind, th2Metadata, specFrom)
+                    val resourceFrom = Th2Resource(resource.apiVersion, resource.kind, th2Metadata, specFrom)
                     conversionContext.convertedResources.add(resourceFrom.toNextVersion())
                     response.convertedResources.add(resource.metadata.name)
                 } catch (e: Exception) {
