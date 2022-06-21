@@ -302,6 +302,7 @@ naming:
     forbiddenName: []
   FunctionMaxLength:
     active: true
+    excludes: [ '**/test/**', '**/androidTest/**', '**/commonTest/**', '**/jvmTest/**', '**/jsTest/**', '**/iosTest/**' ]
     maximumFunctionNameLength: 30
   FunctionMinLength:
     active: true

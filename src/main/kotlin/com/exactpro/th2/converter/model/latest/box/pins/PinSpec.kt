@@ -16,6 +16,8 @@
 
 package com.exactpro.th2.converter.model.latest.box.pins
 
+import com.exactpro.th2.converter.model.ComparableTo
+import com.exactpro.th2.converter.model.v1.box.pins.PinSpecV1
 import com.fasterxml.jackson.annotation.JsonIgnore
 
 data class PinSpec(
@@ -34,7 +36,11 @@ data class MqPin(
     val attributes: List<String>?,
     val filters: List<FilterSpecMq>?,
     val settings: PinSettings?
-)
+) : ComparableTo<PinSpecV1> {
+    override fun contentEquals(that: PinSpecV1): Boolean {
+        return this == that.toMqPin()
+    }
+}
 
 data class GrpcClient(
     val name: String,
@@ -43,12 +49,20 @@ data class GrpcClient(
     val attributes: List<String>?,
     val filters: List<FilterSpecGrpc>?,
     val strategy: String?,
-)
+) : ComparableTo<PinSpecV1> {
+    override fun contentEquals(that: PinSpecV1): Boolean {
+        return this == that.toGrpcClientPin()
+    }
+}
 
 data class GrpcServer(
     val name: String,
     val serviceClasses: List<String>,
-)
+) : ComparableTo<PinSpecV1> {
+    override fun contentEquals(that: PinSpecV1): Boolean {
+        return this == that.toGrpcServerPin()
+    }
+}
 
 data class GrpcSection(
     val client: List<GrpcClient>?,

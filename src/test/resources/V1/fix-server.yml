@@ -1,0 +1,94 @@
+apiVersion: th2.exactpro.com/v1
+kind: Th2Box
+metadata:
+  name: fix-server
+spec:
+  image-name: ghcr.io/th2-net/th2-conn-fix
+  image-version: 3.4.2
+  type: th2-conn
+  custom-config:
+    enableMessageSendingEvent: true
+    maxMessageBatchSize: 1000
+    session-alias: fix-server
+    workspace: /home/sailfish/workspace
+    type: th2_service:FIX_Server
+    name: fix-server
+    settings:
+      autoStartable: true
+      expectedTimeOfStarting: 2000
+      invertStoredMessageTypes: false
+      performDump: false
+      persistMessages: true
+      waitingTimeBeforeStarting: 0
+      allowUnknownMsgFields: false
+      beginString: FIXT.1.1
+      checkLatency: false
+      defaultApplVerID: 9
+      duplicateTagsAllowed: false
+      endTime: 00:00:00
+      fileStorePath: store/fix/sessions
+      logHeartbeats: false
+      maxLatency: 120
+      microsecondsInTimeStampFields: false
+      millisecondsInTimeStampFields: true
+      orderingFields: false
+      receiveLimit: 0
+      rejectInvalidMessage: false
+      resetOnDisconnect: false
+      resetOnLogout: false
+      senderCompID: FGW
+      startTime: 00:00:00
+      targetCompID: DEMO-CONN1
+      useLocalTime: false
+      useSSL: false
+      validateFieldsHaveValues: true
+      validateFieldsOutOfOrder: true
+      validateFieldsOutOfRange: true
+      validateSequenceNumbers: true
+      validateUserDefinedFields: true
+      applicationClassName: com.exactpro.sf.services.fix.ServerApplication
+      keepMessagesInMemory: true
+      socketAcceptPort: 8080
+  pins:
+    - name: in_raw
+      connection-type: mq
+      attributes:
+        - first
+        - raw
+        - publish
+        - store
+    - name: out_raw
+      connection-type: mq
+      attributes:
+        - second
+        - raw
+        - publish
+        - store
+    - name: fix_to_send
+      connection-type: mq
+      attributes:
+        - send
+        - raw
+        - subscribe
+      filters:
+        - metadata:
+            - field-name: session_alias
+              expected-value: fix-server
+              operation: EQUAL
+  extended-settings:
+    service:
+      enabled: true
+      type: ClusterIP
+      endpoints:
+        - name: 'other'
+          targetPort: 8080
+    envVariables:
+      JAVA_TOOL_OPTIONS: |
+        -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=1099 -Dcom.sun.management.jmxremote.rmi.port=1099 -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.local.only=false -Djava.rmi.server.hostname=127.0.0.1 -XX:+ExitOnOutOfMemoryError -XX:+UseContainerSupport -XX:MaxRAMPercentage=85
+    resources:
+      limits:
+        memory: 2000Mi
+        cpu: 1000m
+      requests:
+        memory: 100Mi
+        cpu: 20m

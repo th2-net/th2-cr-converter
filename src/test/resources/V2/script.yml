@@ -1,0 +1,20 @@
+apiVersion: th2.exactpro.com/v2
+kind: Th2Box
+metadata:
+  name: script
+spec:
+  imageName: dev-script
+  imageVersion: dev-script
+  type: th2-script
+  pins:
+    grpc:
+      client:
+        - name: to_act
+          serviceClass: com.exactpro.th2.act.grpc.ActService
+        - name: to_check1
+          serviceClass: com.exactpro.th2.check1.grpc.Check1Service
+  extendedSettings:
+    externalBox:
+      enabled: true
+    service:
+      enabled: false
