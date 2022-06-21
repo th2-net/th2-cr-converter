@@ -73,7 +73,7 @@ data class GenericBoxSpecV1(
             when (pin.connectionType) {
                 PinType.MQ.value -> mqPins.add(pin.toMqPin())
                 PinType.GRPC_CLIENT.value -> grpcClient.add(pin.toGrpcClientPin())
-                PinType.GRPC_SERVER.value -> grpcServer.add(pin.toGrpcServer())
+                PinType.GRPC_SERVER.value -> grpcServer.add(pin.toGrpcServerPin())
             }
         }
         val grpcSection = GrpcSection(

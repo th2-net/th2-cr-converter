@@ -67,12 +67,12 @@ object Converter {
     }
 
     fun convertFromRequest(
-        version: String,
+        targetVersion: String,
         resources: Set<RepositoryResource>
     ): List<Th2Resource> {
         val conversionContext = ConversionContext()
         val response = ConverterControllerResponse()
-        when (version) {
+        when (targetVersion) {
             SHORT_API_VERSION_V2 -> {
                 val linkKind = ResourceType.Th2Link.kind()
                 val boxKinds = setOf<String>(
@@ -87,7 +87,7 @@ object Converter {
                 val boxesToConvert = resources.filterTo(HashSet()) { boxKinds.contains(it.kind) }
                 convert<GenericBoxSpecV1, GenericBoxSpec>(boxesToConvert, conversionContext, response)
             }
-            else -> throw NotAcceptableException("Conversion to specified version: '$version' is not supported")
+            else -> throw NotAcceptableException("Conversion to specified version: '$targetVersion' is not supported")
         }
         return conversionContext.convertedResources
     }

@@ -55,7 +55,7 @@ data class PinSpecV1(
         )
     }
 
-    fun toGrpcServer(): GrpcServer {
+    fun toGrpcServerPin(): GrpcServer {
         return GrpcServer(
             name,
             serviceClasses ?: SERVICE_CLASSES_PLACE_HOLDER

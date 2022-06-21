@@ -1,0 +1,50 @@
+apiVersion: th2.exactpro.com/v1
+kind: Th2Box
+metadata:
+  name: check1
+spec:
+  image-name: ghcr.io/th2-net/th2-check1
+  image-version: 3.9.0-dev-1553192360
+  custom-config:
+    message-cache-size: 1000
+    cleanup-older-than: 10
+    cleanup-time-unit: SECONDS
+    rule-execution-timeout: '7000'
+    "time-precision": "PT0.000000001S"
+    "decimal-precision": 0.001
+    #check-null-value-as-empty: false
+  loggingConfig: |
+    log4j.rootLogger=INFO, CON
+    log4j.appender.CON=org.apache.log4j.ConsoleAppender
+    log4j.appender.CON.layout=org.apache.log4j.PatternLayout
+    log4j.appender.CON.layout.ConversionPattern=%d{dd MMM yyyy HH:mm:ss,SSS} %-6p [%-15t] %c - %m%n
+    log4j.logger.com.exactpro.th2.readlog.impl.RegexpContentParser=INFO
+    log4j.logger.com.exactpro.th2=INFO
+  type: th2-check1
+  pins:
+    - name: server
+      connection-type: grpc-server
+      service-classes:
+        - com.exactpro.th2.check1.grpc.Check1Service
+    - name: from_codec
+      connection-type: mq
+      attributes:
+        - subscribe
+        - parsed
+  extended-settings:
+    service:
+      enabled: true
+      type: NodePort
+      endpoints:
+        - name: grpc
+          targetPort: 8080
+          nodePort: 30742
+    envVariables:
+      JAVA_TOOL_OPTIONS: '-XX:+ExitOnOutOfMemoryError -XX:+UseContainerSupport -XX:MaxRAMPercentage=85'
+    resources:
+      limits:
+        memory: 600Mi
+        cpu: 200m
+      requests:
+        memory: 100Mi
+        cpu: 110m
