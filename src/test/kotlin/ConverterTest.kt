@@ -21,7 +21,6 @@ import com.exactpro.th2.converter.model.latest.Th2Metadata
 import com.exactpro.th2.converter.model.latest.box.GenericBoxSpec
 import com.exactpro.th2.converter.model.latest.box.pins.GrpcClient
 import com.exactpro.th2.converter.model.latest.box.pins.GrpcServer
-import com.exactpro.th2.converter.model.latest.box.pins.MqPin
 import com.exactpro.th2.converter.model.latest.box.pins.PinSpec
 import com.exactpro.th2.converter.model.v1.box.GenericBoxSpecV1
 import com.exactpro.th2.converter.model.v1.box.PinType
@@ -94,9 +93,27 @@ internal class ConverterTest {
 
             assertNotNull(convertedResPins, resFailMessage + "Pin conversion resulted in null")
 
-            val v1MqPins: List<PinSpecV1> = v1ResPins
+            val v1MqSubPins: List<PinSpecV1> = v1ResPins
                 .filter { it.connectionType == PinType.MQ.value }
-            val v2MqPins: List<MqPin>? = convertedResPins.mq
+                .filter { it.attributes?.contains("subscribe") ?: false }
+
+            val v1MqPublisherPins = v1ResPins
+                .filter { it.connectionType == PinType.MQ.value }
+                .filter { it.attributes?.contains("publish") ?: false }
+
+            val mqSection = convertedResPins.mq
+            val v2MqSubPins = mqSection?.subscribers
+            val v2MqPublisherPins = mqSection?.publishers
+
+            testContentsMatch(
+                v2MqSubPins, v1MqSubPins,
+                resFailMessage + "Contents in MQ subscriber pins don't match"
+            )
+
+            testContentsMatch(
+                v2MqPublisherPins, v1MqPublisherPins,
+                resFailMessage + "Contents in MQ publisher pins don't match"
+            )
 
             val v1GrpcServerPins: List<PinSpecV1> = v1ResPins
                 .filter { it.connectionType == PinType.GRPC_SERVER.value }
@@ -106,26 +123,21 @@ internal class ConverterTest {
                 .filter { it.connectionType == PinType.GRPC_CLIENT.value }
             val v2GrpcClientPins: List<GrpcClient>? = convertedResPins.grpc?.client
 
-            if (v2MqPins != null) {
-                assertTrue(
-                    resFailMessage + "Contents in MQ pins don't match",
-                    resourceListsEqual(v2MqPins, v1MqPins)
-                )
-            }
+            testContentsMatch(
+                v2GrpcClientPins, v1GrpcClientPins,
+                resFailMessage + "Contents in Grpc client pins don't match"
+            )
 
-            if (v2GrpcClientPins != null) {
-                assertTrue(
-                    resFailMessage + "Contents in Grpc client pins don't match",
-                    resourceListsEqual(v2GrpcClientPins, v1GrpcClientPins)
-                )
-            }
+            testContentsMatch(
+                v2GrpcServerPins, v1GrpcServerPins,
+                resFailMessage + "Contents in Grpc server pins don't match"
+            )
+        }
+    }
 
-            if (v2GrpcServerPins != null) {
-                assertTrue(
-                    resFailMessage + "Contents in Grpc server pins don't match",
-                    resourceListsEqual(v2GrpcServerPins, v1GrpcServerPins)
-                )
-            }
+    private fun <T> testContentsMatch(converted: List<ComparableTo<T>>?, base: List<T>, failMessage: String) {
+        if (converted != null) {
+            assertTrue(failMessage, resourceListsEqual(converted, base))
         }
     }
 
