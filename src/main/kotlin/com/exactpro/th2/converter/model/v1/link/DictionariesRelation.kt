@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.exactpro.th2.converter.model.latest.link
+package com.exactpro.th2.converter.model.v1.link
 
 data class DictionariesRelation(
     val name: String,
