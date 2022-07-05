@@ -22,7 +22,9 @@ import com.exactpro.th2.converter.model.latest.box.Prometheus
 import com.exactpro.th2.converter.model.latest.box.pins.GrpcClient
 import com.exactpro.th2.converter.model.latest.box.pins.GrpcSection
 import com.exactpro.th2.converter.model.latest.box.pins.GrpcServer
-import com.exactpro.th2.converter.model.latest.box.pins.MqPin
+import com.exactpro.th2.converter.model.latest.box.pins.MqPublisher
+import com.exactpro.th2.converter.model.latest.box.pins.MqSection
+import com.exactpro.th2.converter.model.latest.box.pins.MqSubscriber
 import com.exactpro.th2.converter.model.latest.box.pins.PinSpec
 import com.exactpro.th2.converter.model.v1.box.extendedsettings.ExtendedSettingsV1
 import com.exactpro.th2.converter.model.v1.box.pins.PinSpecV1
@@ -65,13 +67,20 @@ data class GenericBoxSpecV1(
     }
 
     private fun convertPins(): PinSpec {
-        val mqPins = ArrayList<MqPin>()
+        val mqSubscriber = ArrayList<MqSubscriber>()
+        val mqPublishers = ArrayList<MqPublisher>()
         val grpcClient = ArrayList<GrpcClient>()
         val grpcServer = ArrayList<GrpcServer>()
 
         for (pin in pins ?: ArrayList()) {
             when (pin.connectionType) {
-                PinType.MQ.value -> mqPins.add(pin.toMqPin())
+                PinType.MQ.value -> {
+                    if (pin.attributes?.contains("publish") == true) {
+                        mqPublishers.add(pin.toPublisherPin())
+                    } else {
+                        mqSubscriber.add(pin.toSubscriberPin())
+                    }
+                }
                 PinType.GRPC_CLIENT.value -> grpcClient.add(pin.toGrpcClientPin())
                 PinType.GRPC_SERVER.value -> grpcServer.add(pin.toGrpcServerPin())
             }
@@ -81,8 +90,12 @@ data class GenericBoxSpecV1(
             grpcServer.ifEmpty { null }
         )
 
+        val mqSection = MqSection(
+            mqSubscriber.ifEmpty { null },
+            mqPublishers.ifEmpty { null }
+        )
         return PinSpec(
-            mqPins.ifEmpty { null },
+            mqSection.takeIf { it.isNotEmpty() },
             grpcSection.takeIf { it.isNotEmpty() }
         )
     }

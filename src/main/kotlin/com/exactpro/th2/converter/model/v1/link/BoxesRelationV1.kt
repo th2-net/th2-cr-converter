@@ -16,15 +16,9 @@
 
 package com.exactpro.th2.converter.model.v1.link
 
-import com.exactpro.th2.converter.model.latest.link.BoxesRelation
-import com.exactpro.th2.converter.model.latest.link.RouterLink
 import com.fasterxml.jackson.annotation.JsonProperty
 
 data class BoxesRelationV1(
     @JsonProperty("router-grpc") val routerGrpc: List<RouterLink>?,
     @JsonProperty("router-mq") val routerMq: List<RouterLink>?
-) {
-    fun toBoxesRelation(): BoxesRelation {
-        return BoxesRelation(routerGrpc, routerMq)
-    }
-}
+)

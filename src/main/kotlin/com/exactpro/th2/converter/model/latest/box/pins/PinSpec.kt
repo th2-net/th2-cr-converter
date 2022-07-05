@@ -18,10 +18,11 @@ package com.exactpro.th2.converter.model.latest.box.pins
 
 import com.exactpro.th2.converter.model.ComparableTo
 import com.exactpro.th2.converter.model.v1.box.pins.PinSpecV1
+import com.exactpro.th2.converter.model.v1.link.LinkEndpoint
 import com.fasterxml.jackson.annotation.JsonIgnore
 
 data class PinSpec(
-    val mq: List<MqPin>?,
+    val mq: MqSection?,
     val grpc: GrpcSection?
 ) {
     @JsonIgnore
@@ -30,15 +31,35 @@ data class PinSpec(
     }
 }
 
-data class MqPin(
+data class MqSubscriber(
     val name: String,
-
     val attributes: List<String>?,
     val filters: List<FilterSpecMq>?,
-    val settings: PinSettings?
+    val settings: PinSettings?,
+    var linkTo: MutableList<LinkEndpoint>? = null
 ) : ComparableTo<PinSpecV1> {
     override fun contentEquals(that: PinSpecV1): Boolean {
-        return this == that.toMqPin()
+        return this == that.toSubscriberPin()
+    }
+}
+
+data class MqPublisher(
+    val name: String,
+    val attributes: List<String>?,
+    val filters: List<FilterSpecMq>?,
+) : ComparableTo<PinSpecV1> {
+    override fun contentEquals(that: PinSpecV1): Boolean {
+        return this == that.toPublisherPin()
+    }
+}
+
+data class MqSection(
+    val subscribers: List<MqSubscriber>?,
+    val publishers: List<MqPublisher>?
+) {
+    @JsonIgnore
+    fun isNotEmpty(): Boolean {
+        return subscribers != null || publishers != null
     }
 }
 
@@ -49,6 +70,7 @@ data class GrpcClient(
     val attributes: List<String>?,
     val filters: List<FilterSpecGrpc>?,
     val strategy: String?,
+    var linkTo: MutableList<LinkEndpoint>? = null
 ) : ComparableTo<PinSpecV1> {
     override fun contentEquals(that: PinSpecV1): Boolean {
         return this == that.toGrpcClientPin()
