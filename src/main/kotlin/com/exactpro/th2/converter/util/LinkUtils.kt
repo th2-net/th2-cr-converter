@@ -51,10 +51,10 @@ object LinkUtils {
 
             grpcLinks?.forEach { (_, from, to) ->
                 resourceMap
-                    .getOrPut(to.box) { HashMap() }
-                    .getOrPut(to.pin) { LinkTo() }
+                    .getOrPut(from.box) { HashMap() }
+                    .getOrPut(from.pin) { LinkTo() }
                     .grpc.add(
-                        LinkEndpoint(from.box, from.pin)
+                        LinkEndpoint(to.box, to.pin)
                     )
             }
             dictionaryLinks?.forEach { (_, box, dictionary) ->
