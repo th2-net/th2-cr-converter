@@ -29,18 +29,18 @@ import com.exactpro.th2.converter.util.RepositoryUtils.schemaExists
 import com.exactpro.th2.converter.util.RepositoryUtils.updateRepositoryAndPush
 import com.exactpro.th2.converter.util.RepositoryUtils.updateSchemaK8sPropagation
 import com.exactpro.th2.infrarepo.git.GitterContext
+import com.exactpro.th2.infrarepo.repo.Repository
 import com.exactpro.th2.infrarepo.repo.RepositoryResource
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
 class ConverterController {
 
-    @PutMapping("convert/{schemaName}/{targetVersion}")
+    @PostMapping("convert/{schemaName}/{targetVersion}")
     fun convertInSameBranch(
         @PathVariable schemaName: String,
         @PathVariable targetVersion: String
@@ -58,6 +58,7 @@ class ConverterController {
         val gitter = gitterContext.getGitter(schemaName)
         try {
             gitter.lock()
+            Repository.removeLinkResources(gitter)
             updateRepositoryAndPush(conversionResult, gitter)
         } finally {
             gitter.unlock()
@@ -97,6 +98,7 @@ class ConverterController {
             newBranchGitter.lock()
             newBranchGitter.createBranch(sourceSchemaName)
             updateSchemaK8sPropagation(PROPAGATION_RULE, newBranchGitter)
+            Repository.removeLinkResources(newBranchGitter)
             updateRepositoryAndPush(conversionResult, newBranchGitter)
         } finally {
             newBranchGitter.unlock()
