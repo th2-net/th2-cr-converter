@@ -1,0 +1,61 @@
+apiVersion: th2.exactpro.com/v2
+kind: Th2Box
+metadata:
+  name: act
+spec:
+  imageName: ghcr.io/th2-net/th2-act-template-j
+  imageVersion: 3.5.02123
+  type: th2-act
+  extendedSettings:
+    envVariables:
+      JAVA_TOOL_OPTIONS: '-XX:+ExitOnOutOfMemoryError'
+    resources:
+      limits:
+        cpu: 200m
+        memory: 200Mi
+      requests:
+        cpu: 50m
+        memory: 110Mi
+    service:
+      enabled: true
+      nodePort:
+        - name: grpc
+          containerPort: 8080
+          exposedPort: 30741
+  pins:
+    mq:
+      subscribers:
+        - name: from_codec
+          attributes:
+            - first
+            - oe
+            - subscribe
+            - parsed
+            - raw
+            - att
+      publishers:
+        - name: to_send
+          attributes:
+            - raw
+            - publish
+            - test
+        - name: pub_test
+          attributes:
+            - raw
+            - publish
+    grpc:
+      client:
+        - name: to_check1
+          serviceClass: com.exactpro.th2.check1.grpc.Check1Service
+          linkTo:
+            - box: check1
+              pin: server
+            - box: check1
+              pin: server2
+      server:
+        - name: server
+          serviceClasses:
+            - com.exactpro.th2.act.grpc.ActService
+        - name: server2
+          serviceClasses:
+            - com.exactpro.th2.act.grpc.ActService

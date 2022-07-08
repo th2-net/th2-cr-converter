@@ -42,36 +42,34 @@ internal class ConverterTest {
     companion object {
         const val V1_PATH = "src/test/resources/V1/"
         const val V2_PATH = "src/test/resources/V2/"
+        const val ACT = "act.yml"
+        const val CHECK1 = "check1.yml"
+        const val FIX_SERVER = "fix-server.yml"
+        const val SCRIPT = "script.yml"
     }
 
-    private val actV1 = readV1RepoResource("act.yml")
+    private val actV1 = readV1RepoResource(ACT)
 
-    private val check1V1 = readV1RepoResource("check1.yml")
+    private val actV2 = readV2RepoResource(ACT)
 
-    private val fixServerV1 = readV1RepoResource("fix-server.yml")
+    private val check1V1 = readV1RepoResource(CHECK1)
 
-    private val scriptV1 = readV1RepoResource("script.yml")
+    private val fixServerV1 = readV1RepoResource(FIX_SERVER)
 
-    private val scriptV2 = readV2RepoResource("script.yml")
+    private val fixServerV2 = readV2RepoResource(FIX_SERVER)
+
+    private val scriptV1 = readV1RepoResource(SCRIPT)
+
+    private val scriptV2 = readV2RepoResource(SCRIPT)
+
+    private val links1 = readV1RepoResource("links1.yml")
+
+    private val links2 = readV1RepoResource("links2.yml")
 
     private val repoV1BoxesFullSet = sortedSetOf(
-        Comparator.comparing { RepositoryResource::getMetadata.name },
+        Comparator.comparing { res -> res.metadata.name },
         actV1, check1V1, fixServerV1, scriptV1
     )
-
-    private fun readRepoResource(path: String): RepositoryResource {
-        return YAML_MAPPER.readValue(
-            File(path), RepositoryResource::class.java
-        )
-    }
-
-    private fun readV1RepoResource(fileName: String): RepositoryResource {
-        return readRepoResource(V1_PATH + fileName)
-    }
-
-    private fun readV2RepoResource(fileName: String): RepositoryResource {
-        return readRepoResource(V2_PATH + fileName)
-    }
 
     /**
      * Tests Converter.convertFromRequest(targetVersion, resources)
@@ -80,7 +78,7 @@ internal class ConverterTest {
      */
     @Test
     fun testPinsConversionToV2FromRequest() {
-        val convertedTh2ResList = Converter.convertFromRequest("v2", repoV1BoxesFullSet)
+        val convertedTh2ResList = Converter.convertFromRequest("v2", repoV1BoxesFullSet).sortedBy { it.metadata.name }
 
         for ((index, v1Res) in repoV1BoxesFullSet.withIndex()) {
             val resFailMessage = v1Res.metadata.name.plus(" conversion v1 -> v2 failed: ")
@@ -95,11 +93,11 @@ internal class ConverterTest {
 
             val v1MqSubPins: List<PinSpecV1> = v1ResPins
                 .filter { it.connectionType == PinType.MQ.value }
-                .filter { it.attributes?.contains("subscribe") ?: false }
+                .filter { it.attributes?.contains("publish") == false }
 
             val v1MqPublisherPins = v1ResPins
                 .filter { it.connectionType == PinType.MQ.value }
-                .filter { it.attributes?.contains("publish") ?: false }
+                .filter { it.attributes?.contains("publish") == true }
 
             val mqSection = convertedResPins.mq
             val v2MqSubPins = mqSection?.subscribers
@@ -148,14 +146,15 @@ internal class ConverterTest {
      */
 
     @Test
-    fun testConvertFromRequestToV2EntireYAML() {
-        val sampleResSet = setOf(scriptV1)
+    fun testConvertFromRequestToV2EntireYAMLStructure() {
+        val sampleResSet = setOf(scriptV1, links1, links2)
 
+        val failMessage = "script conversion v1 -> v2 failed"
         val actualConvertedList = Converter.convertFromRequest("v2", sampleResSet)
         val actualConvertedScript = actualConvertedList
             .find { it.metadata.name == "script" } as Th2Resource
         var expectedConvertedScriptSpec: GenericBoxSpec? = null
-        assertDoesNotThrow("script conversion v1 -> v2 failed: Spec is incorrect") {
+        assertDoesNotThrow("$failMessage: Spec structure or naming is incorrect") {
             expectedConvertedScriptSpec = YAML_MAPPER.convertValue(scriptV2.spec)
         }
         val expectedConvertedScript = Th2Resource(
@@ -164,9 +163,13 @@ internal class ConverterTest {
             Th2Metadata(scriptV2.metadata.name),
             expectedConvertedScriptSpec!!
         )
+
+        data class Meta(val apiVersion: String, val kind: String, val name: Th2Metadata)
+
         assertEquals(
-            expectedConvertedScript, actualConvertedScript,
-            "script conversion v1 -> v2 failed: API version, kind or metadata is incorrect"
+            Meta(expectedConvertedScript.apiVersion, expectedConvertedScript.kind, expectedConvertedScript.metadata),
+            Meta(actualConvertedScript.apiVersion, actualConvertedScript.kind, actualConvertedScript.metadata),
+            "$failMessage: API version, kind or metadata is incorrect"
         )
     }
 
@@ -222,6 +225,74 @@ internal class ConverterTest {
             expectedFixServerService, actualFixServerService,
             "Service conversion in fix-server v1 -> v2 failed"
         )
+    }
+
+    /**
+     * Tests whether LinkTo section is correctly added to the boxes where due
+     * (either in MQ subscribers or gRPC clients),
+     * according to V1 link files
+     */
+    @Test
+    fun testV2LinksInBoxes() {
+        val repoV1AllResourcesSet = HashSet(repoV1BoxesFullSet)
+        repoV1AllResourcesSet.add(links1)
+        repoV1AllResourcesSet.add(links2)
+        val convertedResList = Converter.convertFromRequest("v2", repoV1AllResourcesSet)
+        val convertedResMap = convertedResList.associateBy { it.metadata.name }
+
+        val actualFixServerSpec = convertedResMap["fix-server"]?.spec as GenericBoxSpec
+        val actualFixServerLinks = actualFixServerSpec.pins?.mq?.subscribers
+            ?.map { sub -> sub.linkTo?.toSet() }
+        val expectedFixServerSpec = readV2ResourceSpec(fixServerV2)
+        val expectedFixServerLinks = expectedFixServerSpec.pins?.mq?.subscribers
+            ?.map { sub -> sub.linkTo?.toSet() }
+
+        assertEquals(
+            expectedFixServerLinks, actualFixServerLinks,
+            "Links were not added properly in fix-server"
+        )
+
+        val actualActSpec = convertedResMap["act"]?.spec as GenericBoxSpec
+        val actualActLinks = actualActSpec.pins?.grpc?.client
+            ?.map { client -> client.linkTo?.toSet() }
+        val expectedActSpec = readV2ResourceSpec(actV2)
+        val expectedActLinks = expectedActSpec.pins?.grpc?.client
+            ?.map { client -> client.linkTo?.toSet() }
+
+        assertEquals(
+            expectedActLinks, actualActLinks,
+            "Links were not added properly in act"
+        )
+
+        val actualScriptSpec = convertedResMap["script"]?.spec as GenericBoxSpec
+        val actualScriptLinks = actualScriptSpec.pins?.grpc?.client
+            ?.map { client -> client.linkTo?.toSet() }
+        val expectedScriptSpec = readV2ResourceSpec(scriptV2)
+        val expectedScriptLinks = expectedScriptSpec.pins?.grpc?.client
+            ?.map { client -> client.linkTo?.toSet() }
+
+        assertEquals(
+            expectedScriptLinks, actualScriptLinks,
+            "Links were not added properly in script"
+        )
+    }
+
+    private fun readRepoResource(path: String): RepositoryResource {
+        return YAML_MAPPER.readValue(
+            File(path), RepositoryResource::class.java
+        )
+    }
+
+    private fun readV2ResourceSpec(res: RepositoryResource): GenericBoxSpec {
+        return YAML_MAPPER.convertValue(res.spec, GenericBoxSpec::class.java)
+    }
+
+    private fun readV1RepoResource(fileName: String): RepositoryResource {
+        return readRepoResource(V1_PATH + fileName)
+    }
+
+    private fun readV2RepoResource(fileName: String): RepositoryResource {
+        return readRepoResource(V2_PATH + fileName)
     }
 
     private fun <T> resourceListsEqual(converted: List<ComparableTo<T>>, base: List<T>): Boolean {

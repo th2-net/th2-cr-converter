@@ -11,6 +11,10 @@ spec:
       connection-type: grpc-server
       service-classes:
         - com.exactpro.th2.act.grpc.ActService
+    - name: server2
+      connection-type: grpc-server
+      service-classes:
+        - com.exactpro.th2.act.grpc.ActService
     - name: to_check1
       connection-type: grpc-client
       service-class: com.exactpro.th2.check1.grpc.Check1Service
@@ -29,6 +33,11 @@ spec:
         - raw
         - publish
         - test
+    - name: pub_test
+      connection-type: mq
+      attributes:
+        - raw
+        - publish
   extended-settings:
     service:
       enabled: true
