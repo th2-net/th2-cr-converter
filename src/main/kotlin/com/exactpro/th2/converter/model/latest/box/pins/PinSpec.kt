@@ -36,7 +36,6 @@ data class MqSubscriber(
     val attributes: List<String>?,
     val filters: List<FilterSpecMq>?,
     val settings: PinSettings?,
-    var linkTo: MutableList<LinkEndpoint>? = null
 ) : ComparableTo<PinSpecV1> {
     override fun contentEquals(that: PinSpecV1): Boolean {
         return this == that.toSubscriberPin()
@@ -47,6 +46,7 @@ data class MqPublisher(
     val name: String,
     val attributes: List<String>?,
     val filters: List<FilterSpecMq>?,
+    var linkTo: MutableList<LinkEndpoint>? = null
 ) : ComparableTo<PinSpecV1> {
     override fun contentEquals(that: PinSpecV1): Boolean {
         return this == that.toPublisherPin()

@@ -42,10 +42,10 @@ object LinkUtils {
 
             mqLinks?.forEach { (_, from, to) ->
                 resourceMap
-                    .getOrPut(to.box) { HashMap() }
-                    .getOrPut(to.pin) { LinkTo() }
+                    .getOrPut(from.box) { HashMap() }
+                    .getOrPut(from.pin) { LinkTo() }
                     .mq.add(
-                        LinkEndpoint(from.box, from.pin)
+                        LinkEndpoint(to.box, to.pin)
                     )
             }
 
@@ -88,7 +88,7 @@ object LinkUtils {
             if (convertedResourcesMap.containsKey(key)) {
                 val resource = convertedResourcesMap[key]
                 val spc: GenericBoxSpec = Mapper.YAML_MAPPER.convertValue(resource!!.spec)
-                val mqPinMap = spc.pins?.mq?.subscribers?.associateBy { it.name }
+                val mqPinMap = spc.pins?.mq?.publishers?.associateBy { it.name }
                 val grpcPinMap = spc.pins?.grpc?.client?.associateBy { it.name }
                 value.forEach { (key, value) ->
                     mqPinMap?.get(key)?.linkTo = value.mq
