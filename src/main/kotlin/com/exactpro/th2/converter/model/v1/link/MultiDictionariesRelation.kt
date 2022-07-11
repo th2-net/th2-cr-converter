@@ -14,16 +14,15 @@
  * limitations under the License.
  */
 
-package com.exactpro.th2.converter.model.latest.link
+package com.exactpro.th2.converter.model.v1.link
 
-import com.exactpro.th2.converter.model.Convertible
+data class MultiDictionariesRelation(
+    val name: String,
+    val box: String,
+    val dictionaries: List<MultiDictionary>
+)
 
-data class GenericLinkSpec(
-    val boxesRelation: BoxesRelation?,
-    val dictionariesRelation: List<DictionariesRelation>?,
-    val multiDictionariesRelation: List<MultiDictionariesRelation>?
-) : Convertible {
-    override fun toNextVersion(): Convertible {
-        throw AssertionError("THis is the latest version. Further conversions are not supported")
-    }
-}
+data class MultiDictionary(
+    val name: String,
+    val alias: String
+)

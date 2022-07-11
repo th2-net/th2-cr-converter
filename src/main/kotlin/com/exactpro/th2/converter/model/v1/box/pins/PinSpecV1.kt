@@ -18,7 +18,8 @@ package com.exactpro.th2.converter.model.v1.box.pins
 
 import com.exactpro.th2.converter.model.latest.box.pins.GrpcClient
 import com.exactpro.th2.converter.model.latest.box.pins.GrpcServer
-import com.exactpro.th2.converter.model.latest.box.pins.MqPin
+import com.exactpro.th2.converter.model.latest.box.pins.MqPublisher
+import com.exactpro.th2.converter.model.latest.box.pins.MqSubscriber
 import com.exactpro.th2.converter.model.latest.box.pins.PinSettings
 import com.fasterxml.jackson.annotation.JsonProperty
 
@@ -36,12 +37,20 @@ data class PinSpecV1(
     val settings: PinSettings?
 ) {
 
-    fun toMqPin(): MqPin {
-        return MqPin(
+    fun toSubscriberPin(): MqSubscriber {
+        return MqSubscriber(
             name,
             attributes,
             filters?.map { it.toMqFilter() },
             settings
+        )
+    }
+
+    fun toPublisherPin(): MqPublisher {
+        return MqPublisher(
+            name,
+            attributes,
+            filters?.map { it.toMqFilter() },
         )
     }
 

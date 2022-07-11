@@ -14,9 +14,15 @@
  * limitations under the License.
  */
 
-package com.exactpro.th2.converter.model.latest.link
+package com.exactpro.th2.converter.model.v1.link
 
-data class BoxesRelation(
-    val routerGrpc: List<RouterLink>?,
-    val routerMq: List<RouterLink>?
+data class RouterLink(
+    val name: String,
+    val from: LinkEndpoint,
+    val to: LinkEndpoint
+)
+
+data class LinkEndpoint(
+    val box: String,
+    val pin: String
 )

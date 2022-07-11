@@ -26,11 +26,25 @@ spec:
       connection-type: grpc-server
       service-classes:
         - com.exactpro.th2.check1.grpc.Check1Service
+    - name: server2
+      connection-type: grpc-server
+      service-classes:
+        - com.exactpro.th2.check1.grpc.Check1Service
     - name: from_codec
       connection-type: mq
       attributes:
         - subscribe
         - parsed
+    - name: sub_check_test
+      connection-type: mq
+      attributes:
+        - subscribe
+        - parsed
+    - name: check_pub
+      connection-type: mq
+      attributes:
+        - raw
+        - publish
   extended-settings:
     service:
       enabled: true

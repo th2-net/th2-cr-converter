@@ -23,7 +23,7 @@ data class Th2Resource(
     val apiVersion: String,
     val kind: String,
     val metadata: Th2Metadata,
-    val spec: Convertible,
+    var spec: Convertible,
 ) {
     fun toNextVersion(): Th2Resource {
         return Th2Resource(

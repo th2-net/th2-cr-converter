@@ -16,22 +16,10 @@
 
 package com.exactpro.th2.converter.model.v1.link
 
-import com.exactpro.th2.converter.model.Convertible
-import com.exactpro.th2.converter.model.latest.link.DictionariesRelation
-import com.exactpro.th2.converter.model.latest.link.GenericLinkSpec
-import com.exactpro.th2.converter.model.latest.link.MultiDictionariesRelation
 import com.fasterxml.jackson.annotation.JsonProperty
 
-data class GenericLinkSpecV1(
+data class LinkSpecV1(
     @JsonProperty("boxes-relation") val boxesRelation: BoxesRelationV1?,
     @JsonProperty("dictionaries-relation") val dictionariesRelation: List<DictionariesRelation>?,
     @JsonProperty("multi-dictionaries-relation") val multiDictionariesRelation: List<MultiDictionariesRelation>?
-) : Convertible {
-    override fun toNextVersion(): Convertible {
-        return GenericLinkSpec(
-            boxesRelation?.toBoxesRelation(),
-            dictionariesRelation,
-            multiDictionariesRelation
-        )
-    }
-}
+)

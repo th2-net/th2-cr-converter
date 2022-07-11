@@ -5,7 +5,7 @@ __GET/test__
 __Returns:__
 "Conversion API is working !"
 
-__PUT/convert/{schemaName}/{targetVersion}__
+__POST/convert/{schemaName}/{targetVersion}__
 
 Get files for given schema from gits. Convert to given version and pushes back converted files if the conversion resulted in no errors
 

@@ -1,0 +1,36 @@
+apiVersion: th2.exactpro.com/v1
+kind: Th2Link
+metadata:
+  name: links1
+spec:
+  boxes-relation:
+    router-mq:
+      - name: mqlink1
+        from:
+          box: act
+          pin: to_send
+        to:
+          box: check1
+          pin: from_codec
+      - name: mqlink2
+        from:
+          box: check1
+          pin: check_pub
+        to:
+          box: fix-server
+          pin: fix_to_send
+    router-grpc:
+      - name: grpclink1
+        from:
+          box: act
+          pin: to_check1
+        to:
+          box: check1
+          pin: server
+      - name: grpclink2
+        from:
+          box: script
+          pin: to_act
+        to:
+          box: act
+          pin: server
