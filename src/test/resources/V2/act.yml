@@ -39,10 +39,18 @@ spec:
             - raw
             - publish
             - test
+          linkTo:
+            - box: check1
+              pin: from_codec
         - name: pub_test
           attributes:
             - raw
             - publish
+          linkTo:
+            - box: check1
+              pin: sub_check_test
+            - box: fix-server
+              pin: fix_to_send
     grpc:
       client:
         - name: to_check1

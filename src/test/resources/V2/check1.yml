@@ -38,21 +38,18 @@ spec:
           attributes:
             - subscribe
             - parsed
-          linkTo:
-            - box: act
-              pin: to_send
         - name: sub_check_test
           attributes:
             - subscribe
             - parsed
-          linkTo:
-            - box: act
-              pin: pub_test
       publishers:
         - name: check_pub
           attributes:
             - raw
             - publish
+          linkTo:
+            - box: fix-server
+              pin: fix_to_send
     grpc:
       server:
         - name: server

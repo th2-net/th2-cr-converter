@@ -241,11 +241,11 @@ internal class ConverterTest {
         val convertedResMap = convertedResList.associateBy { it.metadata.name }
 
         val actualFixServerSpec = convertedResMap["fix-server"]?.spec as GenericBoxSpec
-        val actualFixServerLinks = actualFixServerSpec.pins?.mq?.subscribers
-            ?.map { sub -> sub.linkTo?.toSet() }
+        val actualFixServerLinks = actualFixServerSpec.pins?.mq?.publishers
+            ?.map { pub -> pub.linkTo?.toSet() }
         val expectedFixServerSpec = readV2ResourceSpec(fixServerV2)
-        val expectedFixServerLinks = expectedFixServerSpec.pins?.mq?.subscribers
-            ?.map { sub -> sub.linkTo?.toSet() }
+        val expectedFixServerLinks = expectedFixServerSpec.pins?.mq?.publishers
+            ?.map { pub -> pub.linkTo?.toSet() }
 
         assertEquals(
             expectedFixServerLinks, actualFixServerLinks,
