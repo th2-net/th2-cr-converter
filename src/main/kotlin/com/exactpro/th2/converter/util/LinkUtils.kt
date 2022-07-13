@@ -22,12 +22,14 @@ import com.exactpro.th2.converter.model.v1.link.LinkEndpoint
 import com.exactpro.th2.converter.model.v1.link.LinkSpecV1
 import com.exactpro.th2.converter.model.v1.link.MultiDictionary
 import com.exactpro.th2.converter.model.v1.link.SingleDictionary
+import com.exactpro.th2.converter.util.Mapper.YAML_MAPPER
 import com.exactpro.th2.infrarepo.repo.RepositoryResource
 import com.fasterxml.jackson.module.kotlin.convertValue
+import com.fasterxml.jackson.module.kotlin.readValue
+import java.util.regex.Pattern
 
 object LinkUtils {
-    private const val SINGLE_DICTIONARY_ALIAS = "dictionary"
-    private const val MULTIPLE_DICTIONARY_ALIAS = "dictionaries"
+    private const val DICTIONARIES_ALIAS = "dictionaries"
 
     private fun generateResourceToLinkMap(
         links: Set<RepositoryResource>
@@ -60,14 +62,14 @@ object LinkUtils {
             dictionaryLinks?.forEach { (_, box, dictionary) ->
                 resourceMap
                     .getOrPut(box) { HashMap() }
-                    .getOrPut(SINGLE_DICTIONARY_ALIAS) { LinkTo() }
+                    .getOrPut(DICTIONARIES_ALIAS) { LinkTo() }
                     .dictionary.add(dictionary)
             }
 
             multiDictionaryLinks?.forEach { (_, box, dictionaries) ->
                 resourceMap
                     .getOrPut(box) { HashMap() }
-                    .getOrPut(MULTIPLE_DICTIONARY_ALIAS) { LinkTo() }
+                    .getOrPut(DICTIONARIES_ALIAS) { LinkTo() }
                     .multipleDictionary.addAll(dictionaries)
             }
         }
@@ -87,15 +89,44 @@ object LinkUtils {
         resToLinkMap.forEach { (key, value) ->
             if (convertedResourcesMap.containsKey(key)) {
                 val resource = convertedResourcesMap[key]
-                val spc: GenericBoxSpec = Mapper.YAML_MAPPER.convertValue(resource!!.spec)
-                val mqPinMap = spc.pins?.mq?.subscribers?.associateBy { it.name }
-                val grpcPinMap = spc.pins?.grpc?.client?.associateBy { it.name }
+                val spec: GenericBoxSpec = YAML_MAPPER.convertValue(resource!!.spec)
+                val mqPinMap = spec.pins?.mq?.subscribers?.associateBy { it.name }
+                val grpcPinMap = spec.pins?.grpc?.client?.associateBy { it.name }
                 value.forEach { (key, value) ->
                     mqPinMap?.get(key)?.linkTo = value.mq
                     grpcPinMap?.get(key)?.linkTo = value.grpc
                 }
-                resource.spec = spc
+                val multiDictionaries = value[DICTIONARIES_ALIAS]?.multipleDictionary
+                if (multiDictionaries?.isNotEmpty() == true) {
+                    insertDictionaries(spec, multiDictionaries)
+                }
+                if (value[DICTIONARIES_ALIAS]?.dictionary?.isNotEmpty() == true) {
+                    // TODO deal with regular dictionaries
+                }
+
+                resource.spec = spec
             }
         }
+    }
+
+    private fun insertDictionaries(spec: GenericBoxSpec, multiDictionaries: MutableList<MultiDictionary>) {
+        val customConfigStr = YAML_MAPPER.writeValueAsString(spec.customConfig)
+        val patternStr: StringBuilder = StringBuilder()
+        val dictionary: MutableMap<String, String> = HashMap()
+        multiDictionaries.forEach {
+            patternStr.append(it.alias + "\\n| ")
+            dictionary[" ${it.alias}\n"] = " \${dictionary_link:${it.name}}\n"
+        }
+        val pattern = Pattern.compile("( ${patternStr.dropLast(2)})")
+        val matcher = pattern.matcher(customConfigStr)
+        val stringBuffer = StringBuffer()
+        while (matcher.find()) {
+            val replacement = dictionary[matcher.group(0)]
+            matcher.appendReplacement(stringBuffer, "")
+            stringBuffer.append(replacement)
+        }
+        matcher.appendTail(stringBuffer)
+        val customConfig: Map<String, Any>? = YAML_MAPPER.readValue(stringBuffer.toString())
+        spec.customConfig = customConfig
     }
 }
