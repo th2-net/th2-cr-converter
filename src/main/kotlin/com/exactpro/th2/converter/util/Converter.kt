@@ -49,7 +49,6 @@ object Converter {
                     gitter.lock()
                     boxesToConvert = HashSet(Repository.getAllBoxesAndStores(gitter))
                     links = HashSet(Repository.getResourcesByKind(gitter, ResourceType.Th2Link))
-                    println()
                 } finally {
                     gitter.unlock()
                 }
