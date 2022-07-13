@@ -28,7 +28,7 @@ data class GenericBoxSpec(
     // optional fields
     val type: String?,
     val versionRange: String?,
-    val customConfig: Map<String, Any>?,
+    var customConfig: Map<String, Any>?,
     val extendedSettings: ExtendedSettings?,
     val pins: PinSpec?,
     val prometheus: Prometheus?,
