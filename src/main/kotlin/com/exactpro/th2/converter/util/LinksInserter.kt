@@ -16,6 +16,8 @@
 
 package com.exactpro.th2.converter.util
 
+import com.exactpro.th2.converter.controllers.ConverterControllerResponse
+import com.exactpro.th2.converter.controllers.ErrorMessage
 import com.exactpro.th2.converter.model.Th2Resource
 import com.exactpro.th2.converter.model.latest.box.GenericBoxSpec
 import com.exactpro.th2.converter.model.v1.link.LinkEndpoint
@@ -28,15 +30,33 @@ import com.fasterxml.jackson.module.kotlin.convertValue
 import com.fasterxml.jackson.module.kotlin.readValue
 import java.util.regex.Pattern
 
-object LinkUtils {
-    private const val DICTIONARIES_ALIAS = "dictionaries"
+class LinksInserter {
+    companion object {
+        private const val DICTIONARIES_ALIAS = "dictionaries"
+    }
+
+    private val errors = ArrayList<ErrorMessage>()
 
     private fun generateResourceToLinkMap(
         links: Set<RepositoryResource>
     ): MutableMap<String, MutableMap<String, LinkTo>> {
         val resourceMap: MutableMap<String, MutableMap<String, LinkTo>> = HashMap()
-        links.forEach { link ->
-            val spec: LinkSpecV1 = Mapper.YAML_MAPPER.convertValue(link.spec)
+        for (link in links) {
+            val spec: LinkSpecV1
+            try {
+                spec = YAML_MAPPER.convertValue(link.spec)
+            } catch (e: Exception) {
+                val linkName = link.metadata.name
+                errors.add(
+                    ErrorMessage(
+                        linkName,
+                        "Link resource has one or more inappropriate fields. " +
+                            "Spec of your links may not match the expected ${link.version} version"
+                    )
+                )
+                errors.add(ErrorMessage(linkName, e.message))
+                continue
+            }
             val mqLinks = spec.boxesRelation?.routerMq
             val grpcLinks = spec.boxesRelation?.routerGrpc
             val dictionaryLinks = spec.dictionariesRelation
@@ -82,6 +102,10 @@ object LinkUtils {
         val dictionary: MutableList<SingleDictionary> = ArrayList(),
         val multipleDictionary: MutableList<MultiDictionary> = ArrayList()
     )
+
+    fun addErrorsToResponse(response: ConverterControllerResponse) {
+        response.errorMessages.addAll(errors)
+    }
 
     fun insertLinksIntoBoxes(convertedResources: List<Th2Resource>, links: Set<RepositoryResource>) {
         val resToLinkMap = generateResourceToLinkMap(links)

@@ -54,8 +54,10 @@ object Converter {
                 }
                 val response = ConverterControllerResponse()
                 val convertedResources = convert<GenericBoxSpecV1>(boxesToConvert, API_VERSION_V1, response)
-                LinkUtils.insertLinksIntoBoxes(convertedResources, links)
 
+                val linksInserter = LinksInserter()
+                linksInserter.insertLinksIntoBoxes(convertedResources, links)
+                linksInserter.addErrorsToResponse(response)
                 return ConversionResult(convertedResources, response)
             }
             else -> throw NotAcceptableException("Conversion to specified version: '$version' is not supported")
@@ -78,10 +80,13 @@ object Converter {
                     ResourceType.Th2Mstore.kind()
                 )
 
-                val links = resources.filterTo(HashSet()) { it.kind.equals(linkKind) }
                 val boxesToConvert = resources.filterTo(HashSet()) { boxKinds.contains(it.kind) }
                 convertedResources = convert<GenericBoxSpecV1>(boxesToConvert, API_VERSION_V1, response)
-                LinkUtils.insertLinksIntoBoxes(convertedResources, links)
+
+                val links = resources.filterTo(HashSet()) { it.kind.equals(linkKind) }
+                val linksInserter = LinksInserter()
+                linksInserter.insertLinksIntoBoxes(convertedResources, links)
+                linksInserter.addErrorsToResponse(response)
             }
             else -> throw NotAcceptableException("Conversion to specified version: '$targetVersion' is not supported")
         }
