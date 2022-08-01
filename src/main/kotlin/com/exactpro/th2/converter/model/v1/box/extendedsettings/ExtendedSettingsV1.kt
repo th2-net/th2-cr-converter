@@ -19,6 +19,7 @@ package com.exactpro.th2.converter.model.v1.box.extendedsettings
 import com.exactpro.th2.converter.model.latest.box.ChartConfig
 import com.exactpro.th2.converter.model.latest.box.extendedsettings.ExtendedSettings
 import com.exactpro.th2.converter.model.latest.box.extendedsettings.ExternalBox
+import com.exactpro.th2.converter.model.latest.box.extendedsettings.HostAlias
 import com.exactpro.th2.converter.model.latest.box.extendedsettings.Mounting
 import com.exactpro.th2.converter.model.latest.box.extendedsettings.Resources
 import com.exactpro.th2.converter.model.latest.box.extendedsettings.SharedMemory
@@ -31,6 +32,7 @@ data class ExtendedSettingsV1(
     val replicas: Int?,
     val k8sProbes: Boolean?,
     val externalBox: ExternalBox?,
+    val hostAliases: List<HostAlias>?,
     val hostNetwork: Boolean?,
     val nodeSelector: Map<String, String>?,
     val mounting: List<Mounting>?,
@@ -45,7 +47,7 @@ data class ExtendedSettingsV1(
             replicas,
             k8sProbes,
             externalBox,
-            hostAliases = null,
+            hostAliases,
             hostNetwork,
             nodeSelector,
             mounting,

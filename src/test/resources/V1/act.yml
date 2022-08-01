@@ -39,6 +39,13 @@ spec:
         - raw
         - publish
   extended-settings:
+    hostAliases:
+      - ip: 127.0.0.1
+        hostnames:
+          - "foo.local"
+      - ip: 91.0.0.1
+        hostnames:
+          - "bar.local"
     service:
       enabled: true
       type: NodePort
