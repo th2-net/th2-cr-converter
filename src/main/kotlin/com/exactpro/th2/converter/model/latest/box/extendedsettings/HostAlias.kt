@@ -16,7 +16,9 @@
 
 package com.exactpro.th2.converter.model.latest.box.extendedsettings
 
+import com.fasterxml.jackson.annotation.JsonProperty
+
 data class HostAlias(
     val ip: String,
-    val hostNames: List<String>
+    @JsonProperty("hostnames") val hostNames: List<String>
 )
