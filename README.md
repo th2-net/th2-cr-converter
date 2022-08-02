@@ -21,20 +21,20 @@ Important: Changes won’t be committed unless the conversion of every resource 
 
 __Returns:__
 
-`ConverterControllerResponse` object.
+`ConversionSummary` object.
 
 ```kotlin
-class ConverterControllerResponse(
-    val convertedResources: MutableList<String> = ArrayList(),
-    val errorMessages: MutableList<ErrorMessage> = ArrayList(),
-    var commitRef: String? = null
+class ConversionSummary(
+    val convertedResourceNames: MutableList<String>,
+    val errorMessages: MutableList<ErrorMessage>,
+    var commitRef: String?
 )
 ```
 __response will contain:__ 
 
-list of resources that were converted (if any)
+names of resources that were converted (if any)
 
-list of errors encountered during conversion (if any)
+errors encountered during conversion (if any)
 
 commit reference hash (if there were any changes, and push was successful)
 
@@ -42,7 +42,7 @@ __Response body example:__
 
 ```json
 {
-  "convertedResources": [
+  "convertedResourceNames": [
     "fix-client",
     "rpt-data-viewer",
     "rpt-data-provider",
@@ -78,20 +78,20 @@ Important: New schema/branch won’t be made, changes won’t be committed and k
 
 __Returns__:
 
-`ConverterControllerResponse` object.
+`ConversionSummary` object.
 
 __response will contain:__
 
-list of resources that were converted (if any)
+names of resources that were converted (if any)
 
-list of errors encountered during conversion (if any)
+errors encountered during conversion (if any)
 
 commit reference hash (if there were any changes, and push was successful)
 
 __Response body example:__
 ```json
 {
-    "convertedResources": [
+    "convertedResourceNames": [
         "recon",
         "mstore",
         "script",
@@ -169,50 +169,66 @@ Example:
 
 __Returns:__
 
-List of converted `Th2Resource` objects.
+`ConversionResult` object.
 
-*Note:* You can convert JSON format to YAML with [this online tool](https://onlineyamltools.com/convert-json-to-yaml), and make it more readable with [linter](http://www.yamllint.com/) if necessary.  
+```kotlin
+class ConversionResult(
+    val summary: ConversionSummary,
+    val convertedResources: List<Th2Resource>
+)
+```
 
 __Response body example:__
 
 ```json
-[
+{
+  "summary": {
+    "convertedResourceNames": [
+      "script"
+    ],
+    "errorMessages": []
+  },
+  "convertedResources": [
     {
-        "apiVersion": "th2.exactpro.com/v2",
-        "kind": "Th2Box",
-        "metadata": {
-            "name": "script"
+      "apiVersion": "th2.exactpro.com/v2",
+      "kind": "Th2Box",
+      "metadata": {
+        "name": "script"
+      },
+      "spec": {
+        "imageName": "dev-script",
+        "imageVersion": "dev-script",
+        "type": "th2-script",
+        "extendedSettings": {
+          "externalBox": {
+            "enabled": true
+          },
+          "service": {
+            "enabled": false
+          }
         },
-        "spec": {
-            "imageName": "dev-script",
-            "imageVersion": "dev-script",
-            "type": "th2-script",
-            "extendedSettings": {
-                "externalBox": {
-                    "enabled": true
-                },
-                "service": {
-                    "enabled": false
-                }
-            },
-            "pins": {
-                "grpc": {
-                    "client": [
-                        {
-                            "name": "to_act",
-                            "serviceClass": "com.exactpro.th2.act.grpc.ActService"
-                        },
-                        {
-                            "name": "to_check1",
-                            "serviceClass": "com.exactpro.th2.check1.grpc.Check1Service"
-                        }
-                    ]
-                }
-            }
+        "pins": {
+          "grpc": {
+            "client": [
+              {
+                "name": "to_act",
+                "serviceClass": "com.exactpro.th2.act.grpc.ActService"
+              },
+              {
+                "name": "to_check1",
+                "serviceClass": "com.exactpro.th2.check1.grpc.Check1Service"
+              }
+            ]
+          }
         }
+      }
     }
-]
+  ]
+}
 ```
+
+*Note:* You can convert JSON format to YAML with [this online tool](https://onlineyamltools.com/convert-json-to-yaml), and make it more readable with [linter](http://www.yamllint.com/) if necessary.  
+
 
 
 
