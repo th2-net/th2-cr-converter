@@ -16,6 +16,7 @@
 
 package com.exactpro.th2.converter.util
 
+import com.exactpro.th2.converter.controllers.ConversionResult
 import com.exactpro.th2.converter.controllers.errors.NotAcceptableException
 import com.exactpro.th2.converter.controllers.errors.ServiceException
 import com.exactpro.th2.infrarepo.InconsistentRepositoryStateException
@@ -47,7 +48,7 @@ object RepositoryUtils {
                     )
                 )
             }
-            conversionResult.response.commitRef = gitter.commitAndPush("Schema conversion")
+            conversionResult.summary.commitRef = gitter.commitAndPush("Schema conversion")
         } catch (irse: InconsistentRepositoryStateException) {
             handleInconsistentRepoState(gitter, irse)
         } catch (e: Exception) {

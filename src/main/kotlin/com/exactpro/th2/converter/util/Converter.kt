@@ -16,7 +16,8 @@
 
 package com.exactpro.th2.converter.util
 
-import com.exactpro.th2.converter.controllers.ConverterControllerResponse
+import com.exactpro.th2.converter.controllers.ConversionResult
+import com.exactpro.th2.converter.controllers.ConversionSummary
 import com.exactpro.th2.converter.controllers.ErrorMessage
 import com.exactpro.th2.converter.controllers.errors.NotAcceptableException
 import com.exactpro.th2.converter.model.Convertible
@@ -40,6 +41,8 @@ object Converter {
         gitterContext: GitterContext
     ): ConversionResult {
         val gitter = gitterContext.getGitter(sourceSchema)
+        val summary = ConversionSummary()
+        val convertedResources: List<Th2Resource>
 
         when (version) {
             SHORT_API_VERSION_V2 -> {
@@ -52,13 +55,12 @@ object Converter {
                 } finally {
                     gitter.unlock()
                 }
-                val response = ConverterControllerResponse()
-                val convertedResources = convert<GenericBoxSpecV1>(boxesToConvert, API_VERSION_V1, response)
+                convertedResources = convert<GenericBoxSpecV1>(boxesToConvert, API_VERSION_V1, summary)
 
                 val linksInserter = LinksInserter()
                 linksInserter.insertLinksIntoBoxes(convertedResources, links)
-                linksInserter.addErrorsToResponse(response)
-                return ConversionResult(convertedResources, response)
+                linksInserter.addErrorsToSummary(summary)
+                return ConversionResult(summary, convertedResources)
             }
             else -> throw NotAcceptableException("Conversion to specified version: '$version' is not supported")
         }
@@ -67,9 +69,10 @@ object Converter {
     fun convertFromRequest(
         targetVersion: String,
         resources: Set<RepositoryResource>
-    ): List<Th2Resource> {
-        val response = ConverterControllerResponse()
+    ): ConversionResult {
+        val summary = ConversionSummary()
         val convertedResources: List<Th2Resource>
+
         when (targetVersion) {
             SHORT_API_VERSION_V2 -> {
                 val linkKind = ResourceType.Th2Link.kind()
@@ -81,29 +84,29 @@ object Converter {
                 )
 
                 val boxesToConvert = resources.filterTo(HashSet()) { boxKinds.contains(it.kind) }
-                convertedResources = convert<GenericBoxSpecV1>(boxesToConvert, API_VERSION_V1, response)
+                convertedResources = convert<GenericBoxSpecV1>(boxesToConvert, API_VERSION_V1, summary)
 
                 val links = resources.filterTo(HashSet()) { it.kind.equals(linkKind) }
                 val linksInserter = LinksInserter()
                 linksInserter.insertLinksIntoBoxes(convertedResources, links)
-                linksInserter.addErrorsToResponse(response)
+                linksInserter.addErrorsToSummary(summary)
             }
             else -> throw NotAcceptableException("Conversion to specified version: '$targetVersion' is not supported")
         }
-        return convertedResources
+        return ConversionResult(summary, convertedResources)
     }
 
     private inline fun <reified From : Convertible> convert(
         resources: Set<RepositoryResource>,
         fromVersion: String,
-        response: ConverterControllerResponse
+        summary: ConversionSummary
     ): List<Th2Resource> {
         val convertedResources: MutableList<Th2Resource> = ArrayList()
         for (resource in resources) {
             val th2Metadata: Th2Metadata = YAML_MAPPER.convertValue(resource.metadata)
 
             if (!resource.apiVersion.equals(fromVersion)) {
-                response.errorMessages.add(
+                summary.errorMessages.add(
                     ErrorMessage(
                         resource.metadata.name,
                         "Resource must be of version: $fromVersion"
@@ -116,13 +119,11 @@ object Converter {
                 val specFrom: From = YAML_MAPPER.convertValue(resource.spec)
                 val resourceFrom = Th2Resource(resource.apiVersion, resource.kind, th2Metadata, specFrom)
                 convertedResources.add(resourceFrom.toNextVersion())
-                response.convertedResources.add(resource.metadata.name)
+                summary.convertedResourceNames.add(resource.metadata.name)
             } catch (e: Exception) {
-                response.errorMessages.add(ErrorMessage(resource.metadata.name, e.message))
+                summary.errorMessages.add(ErrorMessage(resource.metadata.name, e.message))
             }
         }
         return convertedResources
     }
 }
-
-data class ConversionResult(val convertedResources: List<Th2Resource>, val response: ConverterControllerResponse)

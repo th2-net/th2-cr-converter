@@ -18,7 +18,6 @@ package com.exactpro.th2.converter.controllers
 
 import com.exactpro.th2.converter.config.ApplicationConfig
 import com.exactpro.th2.converter.controllers.errors.NotAcceptableException
-import com.exactpro.th2.converter.model.Th2Resource
 import com.exactpro.th2.converter.util.Converter.convertFromGit
 import com.exactpro.th2.converter.util.Converter.convertFromRequest
 import com.exactpro.th2.converter.util.ProjectConstants
@@ -44,13 +43,13 @@ class ConverterController {
     fun convertInSameBranch(
         @PathVariable schemaName: String,
         @PathVariable targetVersion: String
-    ): ConverterControllerResponse {
+    ): ConversionSummary {
 
         checkRequestedVersion(targetVersion)
         val gitterContext = GitterContext.getContext(ApplicationConfig.git)
         checkSourceSchema(schemaName, gitterContext)
         val conversionResult = convertFromGit(schemaName, targetVersion, gitterContext)
-        val currentResponse = conversionResult.response
+        val currentResponse = conversionResult.summary
         if (currentResponse.hasErrors()) {
             return currentResponse
         }
@@ -63,7 +62,7 @@ class ConverterController {
         } finally {
             gitter.unlock()
         }
-        return conversionResult.response
+        return conversionResult.summary
     }
 
     @PostMapping("convert/{sourceSchemaName}/{newSchemaName}/{targetVersion}")
@@ -71,13 +70,13 @@ class ConverterController {
         @PathVariable sourceSchemaName: String,
         @PathVariable newSchemaName: String,
         @PathVariable targetVersion: String
-    ): ConverterControllerResponse {
+    ): ConversionSummary {
 
         checkRequestedVersion(targetVersion)
         val gitterContext: GitterContext = GitterContext.getContext(ApplicationConfig.git)
         checkSourceSchema(sourceSchemaName, gitterContext)
         val conversionResult = convertFromGit(sourceSchemaName, targetVersion, gitterContext)
-        val currentResponse = conversionResult.response
+        val currentResponse = conversionResult.summary
         if (currentResponse.hasErrors()) {
             return currentResponse
         }
@@ -103,14 +102,14 @@ class ConverterController {
         } finally {
             newBranchGitter.unlock()
         }
-        return conversionResult.response
+        return conversionResult.summary
     }
 
     @GetMapping("convert/{targetVersion}")
     fun convertRequestedResources(
         @PathVariable targetVersion: String,
         @RequestBody resources: Set<RepositoryResource>
-    ): List<Th2Resource> {
+    ): ConversionResult {
         checkRequestedVersion(targetVersion)
         return convertFromRequest(targetVersion, resources)
     }
