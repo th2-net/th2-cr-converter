@@ -78,7 +78,9 @@ internal class ConverterTest {
      */
     @Test
     fun testPinsConversionToV2FromRequest() {
-        val convertedTh2ResList = Converter.convertFromRequest("v2", repoV1BoxesFullSet).sortedBy { it.metadata.name }
+        val convertedTh2ResList = Converter.convertFromRequest("v2", repoV1BoxesFullSet)
+            .convertedResources
+            .sortedBy { it.metadata.name }
 
         for ((index, v1Res) in repoV1BoxesFullSet.withIndex()) {
             val resFailMessage = v1Res.metadata.name.plus(" conversion v1 -> v2 failed: ")
@@ -150,7 +152,7 @@ internal class ConverterTest {
         val sampleResSet = setOf(scriptV1, links1, links2)
 
         val failMessage = "script conversion v1 -> v2 failed"
-        val actualConvertedList = Converter.convertFromRequest("v2", sampleResSet)
+        val actualConvertedList = Converter.convertFromRequest("v2", sampleResSet).convertedResources
         val actualConvertedScript = actualConvertedList
             .find { it.metadata.name == "script" } as Th2Resource
         var expectedConvertedScriptSpec: GenericBoxSpec? = null
@@ -195,7 +197,7 @@ internal class ConverterTest {
      */
     @Test
     fun testServiceConversionToV2FromRequest() {
-        val convertedResList = Converter.convertFromRequest("v2", setOf(actV1, fixServerV1))
+        val convertedResList = Converter.convertFromRequest("v2", setOf(actV1, fixServerV1)).convertedResources
         val convertedResMap = convertedResList.associateBy { it.metadata.name }
         val actSpec = convertedResMap["act"]?.spec as GenericBoxSpec
         val actualActService = YAML_MAPPER.writeValueAsString(actSpec.extendedSettings?.service)
@@ -237,7 +239,7 @@ internal class ConverterTest {
         val repoV1AllResourcesSet = HashSet(repoV1BoxesFullSet)
         repoV1AllResourcesSet.add(links1)
         repoV1AllResourcesSet.add(links2)
-        val convertedResList = Converter.convertFromRequest("v2", repoV1AllResourcesSet)
+        val convertedResList = Converter.convertFromRequest("v2", repoV1AllResourcesSet).convertedResources
         val convertedResMap = convertedResList.associateBy { it.metadata.name }
 
         val actualFixServerSpec = convertedResMap["fix-server"]?.spec as GenericBoxSpec

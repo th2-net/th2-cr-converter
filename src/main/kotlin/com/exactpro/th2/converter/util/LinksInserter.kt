@@ -16,7 +16,7 @@
 
 package com.exactpro.th2.converter.util
 
-import com.exactpro.th2.converter.controllers.ConverterControllerResponse
+import com.exactpro.th2.converter.controllers.ConversionSummary
 import com.exactpro.th2.converter.controllers.ErrorMessage
 import com.exactpro.th2.converter.model.Th2Resource
 import com.exactpro.th2.converter.model.latest.box.GenericBoxSpec
@@ -103,8 +103,8 @@ class LinksInserter {
         val multipleDictionary: MutableList<MultiDictionary> = ArrayList()
     )
 
-    fun addErrorsToResponse(response: ConverterControllerResponse) {
-        response.errorMessages.addAll(errors)
+    fun addErrorsToSummary(summary: ConversionSummary) {
+        summary.errorMessages.addAll(errors)
     }
 
     fun insertLinksIntoBoxes(convertedResources: List<Th2Resource>, links: Set<RepositoryResource>) {

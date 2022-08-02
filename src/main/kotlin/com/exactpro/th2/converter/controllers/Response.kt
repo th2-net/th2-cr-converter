@@ -16,8 +16,10 @@
 
 package com.exactpro.th2.converter.controllers
 
-data class ConverterControllerResponse(
-    val convertedResources: MutableList<String> = ArrayList(),
+import com.exactpro.th2.converter.model.Th2Resource
+
+data class ConversionSummary(
+    val convertedResourceNames: MutableList<String> = ArrayList(),
     val errorMessages: MutableList<ErrorMessage> = ArrayList(),
     var commitRef: String? = null
 ) {
@@ -26,6 +28,11 @@ data class ConverterControllerResponse(
         return errorMessages.size > 0
     }
 }
+
+data class ConversionResult(
+    val summary: ConversionSummary,
+    val convertedResources: List<Th2Resource>
+)
 
 data class ErrorMessage(
     val resourceName: String,
