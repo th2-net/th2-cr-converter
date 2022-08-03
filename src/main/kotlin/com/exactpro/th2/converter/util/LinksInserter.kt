@@ -23,7 +23,6 @@ import com.exactpro.th2.converter.model.latest.box.GenericBoxSpec
 import com.exactpro.th2.converter.model.v1.link.LinkEndpoint
 import com.exactpro.th2.converter.model.v1.link.LinkSpecV1
 import com.exactpro.th2.converter.model.v1.link.MultiDictionary
-import com.exactpro.th2.converter.model.v1.link.SingleDictionary
 import com.exactpro.th2.converter.util.Mapper.YAML_MAPPER
 import com.exactpro.th2.infrarepo.repo.RepositoryResource
 import com.fasterxml.jackson.module.kotlin.convertValue
@@ -79,11 +78,20 @@ class LinksInserter {
                         LinkEndpoint(to.box, to.pin)
                     )
             }
+
             dictionaryLinks?.forEach { (_, box, dictionary) ->
-                resourceMap
-                    .getOrPut(box) { HashMap() }
-                    .getOrPut(DICTIONARIES_ALIAS) { LinkTo() }
-                    .dictionary.add(dictionary)
+                run {
+                    val dictionariesForSpecificBox = resourceMap
+                        .getOrPut(box) { HashMap() }
+                        .getOrPut(DICTIONARIES_ALIAS) { LinkTo() }
+                        .dictionaries
+                    val type = dictionary.type
+                    if (dictionariesForSpecificBox.containsKey(type)) {
+                        errors.add(ErrorMessage(box, "Multiple dictionaries linked under type: $type"))
+                    } else {
+                        dictionariesForSpecificBox[type] = "\${dictionary_link:${dictionary.name}}"
+                    }
+                }
             }
 
             multiDictionaryLinks?.forEach { (_, box, dictionaries) ->
@@ -99,7 +107,7 @@ class LinksInserter {
     data class LinkTo(
         val mq: MutableList<LinkEndpoint> = ArrayList(),
         val grpc: MutableList<LinkEndpoint> = ArrayList(),
-        val dictionary: MutableList<SingleDictionary> = ArrayList(),
+        val dictionaries: MutableMap<String, String> = HashMap(),
         val multipleDictionary: MutableList<MultiDictionary> = ArrayList()
     )
 
@@ -122,10 +130,11 @@ class LinksInserter {
                 }
                 val multiDictionaries = value[DICTIONARIES_ALIAS]?.multipleDictionary
                 if (multiDictionaries?.isNotEmpty() == true) {
-                    insertDictionaries(spec, multiDictionaries)
+                    insertDictionariesAsAliases(spec, multiDictionaries)
                 }
-                if (value[DICTIONARIES_ALIAS]?.dictionary?.isNotEmpty() == true) {
-                    // TODO deal with regular dictionaries
+                val dictionaries = value[DICTIONARIES_ALIAS]?.dictionaries
+                if (dictionaries?.isNotEmpty() == true) {
+                    spec.customConfig?.put(DICTIONARIES_ALIAS, dictionaries)
                 }
 
                 resource.spec = spec
@@ -133,7 +142,7 @@ class LinksInserter {
         }
     }
 
-    private fun insertDictionaries(spec: GenericBoxSpec, multiDictionaries: MutableList<MultiDictionary>) {
+    private fun insertDictionariesAsAliases(spec: GenericBoxSpec, multiDictionaries: MutableList<MultiDictionary>) {
         val customConfigStr = YAML_MAPPER.writeValueAsString(spec.customConfig)
         val patternStr: StringBuilder = StringBuilder()
         val dictionary: MutableMap<String, String> = HashMap()
@@ -150,7 +159,7 @@ class LinksInserter {
             stringBuffer.append(replacement)
         }
         matcher.appendTail(stringBuffer)
-        val customConfig: Map<String, Any>? = YAML_MAPPER.readValue(stringBuffer.toString())
+        val customConfig: MutableMap<String, Any>? = YAML_MAPPER.readValue(stringBuffer.toString())
         spec.customConfig = customConfig
     }
 }
