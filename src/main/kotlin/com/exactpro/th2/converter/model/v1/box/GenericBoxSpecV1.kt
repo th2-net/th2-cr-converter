@@ -38,7 +38,7 @@ data class GenericBoxSpecV1(
     // optional fields
     val type: String?,
     @JsonProperty("version-range") val versionRange: String?,
-    @JsonProperty("custom-config") val customConfig: Map<String, Any>?,
+    @JsonProperty("custom-config") val customConfig: MutableMap<String, Any>?,
     @JsonProperty("extended-settings") val extendedSettings: ExtendedSettingsV1?,
     val pins: List<PinSpecV1>?,
     val prometheus: Prometheus?,
