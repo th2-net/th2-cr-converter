@@ -6,6 +6,19 @@ spec:
   imageName: dev-script
   imageVersion: dev-script
   type: th2-script
+  customConfig:
+    single: "${dictionary_link:multi2}"
+    dictionaryMap:
+      dict_for_a: "${dictionary_link:multi1}"
+      dict_for_b: "${dictionary_link:multi2}"
+    subStructure:
+      genericFixDictionary: "${dictionary_link:multi1}"
+      subStructure:
+        genericFixDictionary: "${dictionary_link:multi2}"
+
+    dictionaries:
+      LEVEL1: "${dictionary_link:level1-dict}"
+      MAIN: "${dictionary_link:main-dict}"
   pins:
     grpc:
       client:

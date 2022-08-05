@@ -6,6 +6,15 @@ spec:
   image-name: dev-script
   image-version: dev-script
   type: th2-script
+  custom-config:
+    single: alias_2
+    dictionaryMap:
+      dict_for_a: alias_1
+      dict_for_b: alias_2
+    subStructure:
+      genericFixDictionary: alias_1
+      subStructure:
+        genericFixDictionary: alias_2
   pins:
     - name: to_act
       connection-type: grpc-client

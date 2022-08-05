@@ -66,6 +66,8 @@ internal class ConverterTest {
 
     private val links2 = readV1RepoResource("links2.yml")
 
+    private val dictionaryLinks = readV1RepoResource("dictionaryLinks.yml")
+
     private val repoV1BoxesFullSet = sortedSetOf(
         Comparator.comparing { res -> res.metadata.name },
         actV1, check1V1, fixServerV1, scriptV1
@@ -197,8 +199,7 @@ internal class ConverterTest {
      */
     @Test
     fun testServiceConversionToV2FromRequest() {
-        val convertedResList = Converter.convertFromRequest("v2", setOf(actV1, fixServerV1)).convertedResources
-        val convertedResMap = convertedResList.associateBy { it.metadata.name }
+        val convertedResMap = convertFromRequestAsMap("v2", setOf(actV1, fixServerV1))
         val actSpec = convertedResMap["act"]?.spec as GenericBoxSpec
         val actualActService = YAML_MAPPER.writeValueAsString(actSpec.extendedSettings?.service)
         val expectedActService = """
@@ -235,12 +236,11 @@ internal class ConverterTest {
      * according to V1 link files
      */
     @Test
-    fun testV2LinksInBoxes() {
+    fun testV2LinkToInBoxes() {
         val repoV1AllResourcesSet = HashSet(repoV1BoxesFullSet)
         repoV1AllResourcesSet.add(links1)
         repoV1AllResourcesSet.add(links2)
-        val convertedResList = Converter.convertFromRequest("v2", repoV1AllResourcesSet).convertedResources
-        val convertedResMap = convertedResList.associateBy { it.metadata.name }
+        val convertedResMap = convertFromRequestAsMap("v2", repoV1AllResourcesSet)
 
         val actualFixServerSpec = convertedResMap["fix-server"]?.spec as GenericBoxSpec
         val actualFixServerLinks = actualFixServerSpec.pins?.mq?.subscribers
@@ -277,6 +277,31 @@ internal class ConverterTest {
             expectedScriptLinks, actualScriptLinks,
             "Links were not added properly in script"
         )
+    }
+
+    /**
+     * Tests that both single and multi dictionary links are correctly added to boxes
+     */
+    @Test
+    fun testV2DictionaryLinksInBoxes() {
+        val repoV1ResourceSet = setOf(scriptV1, dictionaryLinks)
+        val convertedResMap = convertFromRequestAsMap("v2", repoV1ResourceSet)
+
+        val expectedScriptSpec = readV2ResourceSpec(scriptV2)
+        val expectedScriptCustomCfg: MutableMap<String, Any>? = expectedScriptSpec.customConfig
+
+        val actualScriptSpec = convertedResMap["script"]?.spec as GenericBoxSpec
+        val actualScriptCustomCfg: MutableMap<String, Any>? = actualScriptSpec.customConfig
+
+        assertEquals(
+            expectedScriptCustomCfg, actualScriptCustomCfg,
+            "Dictionary links were not added properly in V2 script custom config"
+        )
+    }
+
+    private fun convertFromRequestAsMap(toVersion: String, resSet: Set<RepositoryResource>): Map<String, Th2Resource> {
+        val convertedTh2ResList = Converter.convertFromRequest(toVersion, resSet).convertedResources
+        return convertedTh2ResList.associateBy { it.metadata.name }
     }
 
     private fun readRepoResource(path: String): RepositoryResource {
