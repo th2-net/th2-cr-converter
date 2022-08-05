@@ -134,6 +134,7 @@ class LinksInserter {
                 }
                 val dictionaries = value[DICTIONARIES_ALIAS]?.dictionaries
                 if (dictionaries?.isNotEmpty() == true) {
+                    spec.customConfig = spec.customConfig ?: mutableMapOf()
                     spec.customConfig?.put(DICTIONARIES_ALIAS, dictionaries)
                 }
 

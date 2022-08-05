@@ -1,0 +1,24 @@
+apiVersion: th2.exactpro.com/v1
+kind: Th2Link
+metadata:
+  name: dictionaryLinks
+spec:
+  multi-dictionaries-relation:
+    - name: script-multi-dictionary
+      box: script
+      dictionaries:
+        - name: multi1
+          alias: alias_1
+        - name: multi2
+          alias: alias_2
+  dictionaries-relation:
+    - name: script-dictionary-link
+      box: script
+      dictionary:
+        name: main-dict
+        type: MAIN
+    - name: script-dictionary-level1-link
+      box: script
+      dictionary:
+        name: level1-dict
+        type: LEVEL1
