@@ -22,7 +22,6 @@ import com.exactpro.th2.converter.controllers.errors.ServiceException
 import com.exactpro.th2.infrarepo.InconsistentRepositoryStateException
 import com.exactpro.th2.infrarepo.git.Gitter
 import com.exactpro.th2.infrarepo.git.GitterContext
-import com.exactpro.th2.infrarepo.repo.GenericResource
 import com.exactpro.th2.infrarepo.repo.Repository
 import com.exactpro.th2.infrarepo.repo.RepositoryResource
 import mu.KotlinLogging
@@ -43,7 +42,7 @@ object RepositoryUtils {
                     RepositoryResource(
                         convertedRes.apiVersion,
                         convertedRes.kind,
-                        GenericResource.Metadata(convertedRes.metadata.name),
+                        convertedRes.metadata,
                         convertedRes.spec
                     )
                 )

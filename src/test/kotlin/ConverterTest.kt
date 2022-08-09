@@ -17,7 +17,6 @@
 import com.exactpro.th2.converter.controllers.errors.NotAcceptableException
 import com.exactpro.th2.converter.model.ComparableTo
 import com.exactpro.th2.converter.model.Th2Resource
-import com.exactpro.th2.converter.model.latest.Th2Metadata
 import com.exactpro.th2.converter.model.latest.box.GenericBoxSpec
 import com.exactpro.th2.converter.model.latest.box.pins.GrpcClient
 import com.exactpro.th2.converter.model.latest.box.pins.GrpcServer
@@ -29,6 +28,7 @@ import com.exactpro.th2.converter.util.Converter
 import com.exactpro.th2.converter.util.Mapper.YAML_MAPPER
 import com.exactpro.th2.infrarepo.repo.RepositoryResource
 import com.fasterxml.jackson.module.kotlin.convertValue
+import io.fabric8.kubernetes.api.model.ObjectMeta
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows
@@ -164,11 +164,11 @@ internal class ConverterTest {
         val expectedConvertedScript = Th2Resource(
             scriptV2.apiVersion,
             scriptV2.kind,
-            Th2Metadata(scriptV2.metadata.name),
+            scriptV2.metadata,
             expectedConvertedScriptSpec!!
         )
 
-        data class Meta(val apiVersion: String, val kind: String, val name: Th2Metadata)
+        data class Meta(val apiVersion: String, val kind: String, val name: ObjectMeta)
 
         assertEquals(
             Meta(expectedConvertedScript.apiVersion, expectedConvertedScript.kind, expectedConvertedScript.metadata),
