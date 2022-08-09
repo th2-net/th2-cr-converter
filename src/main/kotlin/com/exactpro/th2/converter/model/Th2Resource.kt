@@ -16,13 +16,13 @@
 
 package com.exactpro.th2.converter.model
 
-import com.exactpro.th2.converter.model.latest.Th2Metadata
 import com.exactpro.th2.converter.util.ProjectConstants.API_VERSION_V2
+import io.fabric8.kubernetes.api.model.ObjectMeta
 
 data class Th2Resource(
     val apiVersion: String,
     val kind: String,
-    val metadata: Th2Metadata,
+    val metadata: ObjectMeta,
     var spec: Convertible,
 ) {
     fun toNextVersion(): Th2Resource {
