@@ -34,3 +34,12 @@ jobs:
         push: true
         tags: ghcr.io/${{ github.repository }}:${{ steps.read_property.outputs.value }}
         labels: com.exactpro.th2.${{ steps.meta.outputs.REPOSITORY_NAME }}=${{ steps.read_property.outputs.value }}
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: ghcr.io/th2-net/th2-cr-converter:${{ steps.read_property.outputs.value }}
+        format: 'table'
+        exit-code: '1'
+        ignore-unfixed: true
+        vuln-type: 'os,library'
+        severity: 'CRITICAL,HIGH,MEDIUM'
