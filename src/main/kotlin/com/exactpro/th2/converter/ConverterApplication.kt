@@ -16,6 +16,7 @@
 
 package com.exactpro.th2.converter
 
+import mu.KotlinLogging
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
 
@@ -23,5 +24,10 @@ import org.springframework.boot.runApplication
 open class ConverterApplication
 
 fun main(args: Array<String>) {
-    runApplication<ConverterApplication>(*args)
+    try {
+        runApplication<ConverterApplication>(*args)
+    } catch (e: Exception) {
+        val logger = KotlinLogging.logger { }
+        logger.error("Exiting with exception", e)
+    }
 }
