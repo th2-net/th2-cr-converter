@@ -197,8 +197,8 @@ internal class ConverterTest {
      */
     @Test
     fun testServiceConversionToV2FromRequest() {
-        val convertedResMap = convertFromRequestAsMap("v2", setOf(actV1, fixServerV1))
-        val actSpec = convertedResMap["act"]?.specWrapper as ConvertibleBoxSpecV2
+        val convertedResMap = convertFromRequestAsMap("v2", setOf(actV1, fixServerV1, check1V1))
+        val actSpec = boxSpecV2FromMap(convertedResMap, "act")
         val actualActService = YAML_MAPPER.writeValueAsString(actSpec.spec.extendedSettings?.service)
         val expectedActService = """
             enabled: true
@@ -213,7 +213,7 @@ internal class ConverterTest {
             "Service conversion in act v1 -> v2 failed"
         )
 
-        val fixServerSpec = convertedResMap["fix-server"]?.specWrapper as ConvertibleBoxSpecV2
+        val fixServerSpec = boxSpecV2FromMap(convertedResMap, "fix-server")
         val actualFixServerService = YAML_MAPPER.writeValueAsString(fixServerSpec.spec.extendedSettings?.service)
         val expectedFixServerService = """
             enabled: true
@@ -225,6 +225,22 @@ internal class ConverterTest {
         assertEquals(
             expectedFixServerService, actualFixServerService,
             "Service conversion in fix-server v1 -> v2 failed"
+        )
+
+        val check1Spec = boxSpecV2FromMap(convertedResMap, "check1")
+        val actualCheck1Service = YAML_MAPPER.writeValueAsString(check1Spec.spec.extendedSettings?.service)
+        val expectedCheck1Service = """
+            enabled: true
+            loadBalancer:
+            - name: grpc
+              containerPort: 8080
+            - name: test
+              containerPort: 8081
+        """.trimIndent().plus("\n")
+
+        assertEquals(
+            expectedCheck1Service, actualCheck1Service,
+            "Service conversion in check1 v1 -> v2 failed"
         )
     }
 
@@ -240,7 +256,7 @@ internal class ConverterTest {
         repoV1AllResourcesSet.add(links2)
         val convertedResMap = convertFromRequestAsMap("v2", repoV1AllResourcesSet)
 
-        val actualFixServerSpec = convertedResMap["fix-server"]?.specWrapper as ConvertibleBoxSpecV2
+        val actualFixServerSpec = boxSpecV2FromMap(convertedResMap, "fix-server")
         val actualFixServerLinks = actualFixServerSpec.spec.pins?.mq?.subscribers
             ?.map { sub -> sub.linkTo?.toSet() }
         val expectedFixServerSpec = readV2ResourceSpec(fixServerV2)
@@ -252,7 +268,7 @@ internal class ConverterTest {
             "Links were not added properly in fix-server"
         )
 
-        val actualActSpec = convertedResMap["act"]?.specWrapper as ConvertibleBoxSpecV2
+        val actualActSpec = boxSpecV2FromMap(convertedResMap, "act")
         val actualActLinks = actualActSpec.spec.pins?.grpc?.client
             ?.map { client -> client.linkTo?.toSet() }
         val expectedActSpec = readV2ResourceSpec(actV2)
@@ -264,7 +280,7 @@ internal class ConverterTest {
             "Links were not added properly in act"
         )
 
-        val actualScriptSpec = convertedResMap["script"]?.specWrapper as ConvertibleBoxSpecV2
+        val actualScriptSpec = boxSpecV2FromMap(convertedResMap, "script")
         val actualScriptLinks = actualScriptSpec.spec.pins?.grpc?.client
             ?.map { client -> client.linkTo?.toSet() }
         val expectedScriptSpec = readV2ResourceSpec(scriptV2)
@@ -288,7 +304,7 @@ internal class ConverterTest {
         val expectedScriptSpec = readV2ResourceSpec(scriptV2)
         val expectedScriptCustomCfg: MutableMap<String, Any>? = expectedScriptSpec.customConfig
 
-        val actualScriptSpec = convertedResMap["script"]?.specWrapper as ConvertibleBoxSpecV2
+        val actualScriptSpec = boxSpecV2FromMap(convertedResMap, "script")
         val actualScriptCustomCfg: MutableMap<String, Any>? = actualScriptSpec.spec.customConfig
 
         assertEquals(
@@ -296,6 +312,9 @@ internal class ConverterTest {
             "Dictionary links were not added properly in V2 script custom config"
         )
     }
+
+    private fun boxSpecV2FromMap(convertedResMap: Map<String, Th2Resource>, resName: String) =
+        convertedResMap[resName]?.specWrapper as ConvertibleBoxSpecV2
 
     private fun convertFromRequestAsMap(toVersion: String, resSet: Set<RepositoryResource>): Map<String, Th2Resource> {
         val convertedTh2ResList = Converter.convertFromRequest(toVersion, resSet).convertedResources

@@ -52,11 +52,12 @@ spec:
           - "bar.local"
     service:
       enabled: true
-      type: NodePort
+      type: LoadBalancer
       endpoints:
         - name: grpc
           targetPort: 8080
-          nodePort: 30742
+        - name: test
+          targetPort: 8081
     envVariables:
       JAVA_TOOL_OPTIONS: '-XX:+ExitOnOutOfMemoryError -XX:+UseContainerSupport -XX:MaxRAMPercentage=85'
     resources:

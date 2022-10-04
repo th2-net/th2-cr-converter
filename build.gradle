@@ -9,7 +9,7 @@ ext {
     fabric8_version = '6.0.0'
     jackson_module_kotlin_version = '2.13.2'
     infra_repo_version = "1.1.15"
-    resource_model_version = "1.0.0"
+    resource_model_version = '1.1.1'
     slf4j_api_version = '1.7.36'
     slf4j_impl_version = '2.18.0'
     junit_jupiter_version = '5.9.0'
