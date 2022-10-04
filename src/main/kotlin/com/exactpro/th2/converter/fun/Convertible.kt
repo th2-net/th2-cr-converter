@@ -14,11 +14,9 @@
  * limitations under the License.
  */
 
-package com.exactpro.th2.converter.model.v1.link
+package com.exactpro.th2.converter.`fun`
 
-import com.fasterxml.jackson.annotation.JsonProperty
-
-data class BoxesRelationV1(
-    @JsonProperty("router-grpc") val routerGrpc: List<RouterLink>?,
-    @JsonProperty("router-mq") val routerMq: List<RouterLink>?
-)
+sealed interface Convertible {
+    fun toNextVersion(): Convertible
+    fun getSpecObject(): Any
+}

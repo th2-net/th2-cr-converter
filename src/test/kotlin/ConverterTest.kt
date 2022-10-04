@@ -15,18 +15,16 @@
  */
 
 import com.exactpro.th2.converter.controllers.errors.NotAcceptableException
-import com.exactpro.th2.converter.model.ComparableTo
+import com.exactpro.th2.converter.`fun`.ConvertibleBoxSpecV2
 import com.exactpro.th2.converter.model.Th2Resource
-import com.exactpro.th2.converter.model.latest.box.GenericBoxSpec
-import com.exactpro.th2.converter.model.latest.box.pins.GrpcClient
-import com.exactpro.th2.converter.model.latest.box.pins.GrpcServer
-import com.exactpro.th2.converter.model.latest.box.pins.PinSpec
-import com.exactpro.th2.converter.model.v1.box.GenericBoxSpecV1
-import com.exactpro.th2.converter.model.v1.box.PinType
-import com.exactpro.th2.converter.model.v1.box.pins.PinSpecV1
 import com.exactpro.th2.converter.util.Converter
 import com.exactpro.th2.converter.util.Mapper.YAML_MAPPER
 import com.exactpro.th2.infrarepo.repo.RepositoryResource
+import com.exactpro.th2.model.latest.box.Spec
+import com.exactpro.th2.model.latest.box.pins.PinSpec
+import com.exactpro.th2.model.v1.box.SpecV1
+import com.exactpro.th2.model.v1.box.pins.PinSpecV1
+import com.exactpro.th2.model.v1.box.pins.PinType
 import com.fasterxml.jackson.module.kotlin.convertValue
 import io.fabric8.kubernetes.api.model.ObjectMeta
 import org.junit.jupiter.api.Test
@@ -87,11 +85,11 @@ internal class ConverterTest {
         for ((index, v1Res) in repoV1BoxesFullSet.withIndex()) {
             val resFailMessage = v1Res.metadata.name.plus(" conversion v1 -> v2 failed: ")
 
-            val v1ResSpec: GenericBoxSpecV1 = YAML_MAPPER.convertValue(v1Res.spec)
+            val v1ResSpec: SpecV1 = YAML_MAPPER.convertValue(v1Res.spec)
             val v1ResPins = v1ResSpec.pins as List<PinSpecV1> // not testing null pins
 
-            val convertedResSpec = convertedTh2ResList[index].spec as GenericBoxSpec
-            val convertedResPins: PinSpec? = convertedResSpec.pins
+            val convertedResSpec = convertedTh2ResList[index].specWrapper as ConvertibleBoxSpecV2
+            val convertedResPins: PinSpec? = convertedResSpec.spec.pins
 
             assertNotNull(convertedResPins, resFailMessage + "Pin conversion resulted in null")
 
@@ -104,8 +102,8 @@ internal class ConverterTest {
                 .filter { it.attributes?.contains("publish") == true }
 
             val mqSection = convertedResPins.mq
-            val v2MqSubPins = mqSection?.subscribers
-            val v2MqPublisherPins = mqSection?.publishers
+            val v2MqSubPins = mqSection?.subscribers?.map { ComparableMqSubscriberV2(it) }
+            val v2MqPublisherPins = mqSection?.publishers?.map { ComparableMqPublisherV2(it) }
 
             testContentsMatch(
                 v2MqSubPins, v1MqSubPins,
@@ -119,11 +117,11 @@ internal class ConverterTest {
 
             val v1GrpcServerPins: List<PinSpecV1> = v1ResPins
                 .filter { it.connectionType == PinType.GRPC_SERVER.value }
-            val v2GrpcServerPins: List<GrpcServer>? = convertedResPins.grpc?.server
+            val v2GrpcServerPins = convertedResPins.grpc?.server?.map { ComparableGrpcServerV2(it) }
 
             val v1GrpcClientPins: List<PinSpecV1> = v1ResPins
                 .filter { it.connectionType == PinType.GRPC_CLIENT.value }
-            val v2GrpcClientPins: List<GrpcClient>? = convertedResPins.grpc?.client
+            val v2GrpcClientPins = convertedResPins.grpc?.client?.map { ComparableGrpcClientV2(it) }
 
             testContentsMatch(
                 v2GrpcClientPins, v1GrpcClientPins,
@@ -157,7 +155,7 @@ internal class ConverterTest {
         val actualConvertedList = Converter.convertFromRequest("v2", sampleResSet).convertedResources
         val actualConvertedScript = actualConvertedList
             .find { it.metadata.name == "script" } as Th2Resource
-        var expectedConvertedScriptSpec: GenericBoxSpec? = null
+        var expectedConvertedScriptSpec: Spec? = null
         assertDoesNotThrow("$failMessage: Spec structure or naming is incorrect") {
             expectedConvertedScriptSpec = YAML_MAPPER.convertValue(scriptV2.spec)
         }
@@ -165,7 +163,7 @@ internal class ConverterTest {
             scriptV2.apiVersion,
             scriptV2.kind,
             scriptV2.metadata,
-            expectedConvertedScriptSpec!!
+            ConvertibleBoxSpecV2(expectedConvertedScriptSpec!!)
         )
 
         data class Meta(val apiVersion: String, val kind: String, val name: ObjectMeta)
@@ -200,8 +198,8 @@ internal class ConverterTest {
     @Test
     fun testServiceConversionToV2FromRequest() {
         val convertedResMap = convertFromRequestAsMap("v2", setOf(actV1, fixServerV1))
-        val actSpec = convertedResMap["act"]?.spec as GenericBoxSpec
-        val actualActService = YAML_MAPPER.writeValueAsString(actSpec.extendedSettings?.service)
+        val actSpec = convertedResMap["act"]?.specWrapper as ConvertibleBoxSpecV2
+        val actualActService = YAML_MAPPER.writeValueAsString(actSpec.spec.extendedSettings?.service)
         val expectedActService = """
             enabled: true
             nodePort:
@@ -215,8 +213,8 @@ internal class ConverterTest {
             "Service conversion in act v1 -> v2 failed"
         )
 
-        val fixServerSpec = convertedResMap["fix-server"]?.spec as GenericBoxSpec
-        val actualFixServerService = YAML_MAPPER.writeValueAsString(fixServerSpec.extendedSettings?.service)
+        val fixServerSpec = convertedResMap["fix-server"]?.specWrapper as ConvertibleBoxSpecV2
+        val actualFixServerService = YAML_MAPPER.writeValueAsString(fixServerSpec.spec.extendedSettings?.service)
         val expectedFixServerService = """
             enabled: true
             clusterIP:
@@ -242,8 +240,8 @@ internal class ConverterTest {
         repoV1AllResourcesSet.add(links2)
         val convertedResMap = convertFromRequestAsMap("v2", repoV1AllResourcesSet)
 
-        val actualFixServerSpec = convertedResMap["fix-server"]?.spec as GenericBoxSpec
-        val actualFixServerLinks = actualFixServerSpec.pins?.mq?.subscribers
+        val actualFixServerSpec = convertedResMap["fix-server"]?.specWrapper as ConvertibleBoxSpecV2
+        val actualFixServerLinks = actualFixServerSpec.spec.pins?.mq?.subscribers
             ?.map { sub -> sub.linkTo?.toSet() }
         val expectedFixServerSpec = readV2ResourceSpec(fixServerV2)
         val expectedFixServerLinks = expectedFixServerSpec.pins?.mq?.subscribers
@@ -254,8 +252,8 @@ internal class ConverterTest {
             "Links were not added properly in fix-server"
         )
 
-        val actualActSpec = convertedResMap["act"]?.spec as GenericBoxSpec
-        val actualActLinks = actualActSpec.pins?.grpc?.client
+        val actualActSpec = convertedResMap["act"]?.specWrapper as ConvertibleBoxSpecV2
+        val actualActLinks = actualActSpec.spec.pins?.grpc?.client
             ?.map { client -> client.linkTo?.toSet() }
         val expectedActSpec = readV2ResourceSpec(actV2)
         val expectedActLinks = expectedActSpec.pins?.grpc?.client
@@ -266,8 +264,8 @@ internal class ConverterTest {
             "Links were not added properly in act"
         )
 
-        val actualScriptSpec = convertedResMap["script"]?.spec as GenericBoxSpec
-        val actualScriptLinks = actualScriptSpec.pins?.grpc?.client
+        val actualScriptSpec = convertedResMap["script"]?.specWrapper as ConvertibleBoxSpecV2
+        val actualScriptLinks = actualScriptSpec.spec.pins?.grpc?.client
             ?.map { client -> client.linkTo?.toSet() }
         val expectedScriptSpec = readV2ResourceSpec(scriptV2)
         val expectedScriptLinks = expectedScriptSpec.pins?.grpc?.client
@@ -290,8 +288,8 @@ internal class ConverterTest {
         val expectedScriptSpec = readV2ResourceSpec(scriptV2)
         val expectedScriptCustomCfg: MutableMap<String, Any>? = expectedScriptSpec.customConfig
 
-        val actualScriptSpec = convertedResMap["script"]?.spec as GenericBoxSpec
-        val actualScriptCustomCfg: MutableMap<String, Any>? = actualScriptSpec.customConfig
+        val actualScriptSpec = convertedResMap["script"]?.specWrapper as ConvertibleBoxSpecV2
+        val actualScriptCustomCfg: MutableMap<String, Any>? = actualScriptSpec.spec.customConfig
 
         assertEquals(
             expectedScriptCustomCfg, actualScriptCustomCfg,
@@ -310,8 +308,8 @@ internal class ConverterTest {
         )
     }
 
-    private fun readV2ResourceSpec(res: RepositoryResource): GenericBoxSpec {
-        return YAML_MAPPER.convertValue(res.spec, GenericBoxSpec::class.java)
+    private fun readV2ResourceSpec(res: RepositoryResource): Spec {
+        return YAML_MAPPER.convertValue(res.spec, Spec::class.java)
     }
 
     private fun readV1RepoResource(fileName: String): RepositoryResource {

@@ -43,7 +43,7 @@ object RepositoryUtils {
                         convertedRes.apiVersion,
                         convertedRes.kind,
                         convertedRes.metadata,
-                        convertedRes.spec
+                        convertedRes.specWrapper
                     )
                 )
             }

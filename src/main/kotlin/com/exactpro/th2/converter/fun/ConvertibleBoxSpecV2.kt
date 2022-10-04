@@ -14,10 +14,16 @@
  * limitations under the License.
  */
 
-package com.exactpro.th2.converter.model.latest.box.pins
+package com.exactpro.th2.converter.`fun`
 
-data class FilterFieldSpec(
-    val expectedValue: String,
-    val fieldName: String,
-    val operation: String
-)
+import com.exactpro.th2.model.latest.box.Spec
+
+class ConvertibleBoxSpecV2(val spec: Spec) : Convertible {
+    override fun toNextVersion(): Convertible {
+        throw AssertionError("This is the latest version. Further conversions are not supported")
+    }
+
+    override fun getSpecObject(): Any {
+        return spec
+    }
+}
