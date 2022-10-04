@@ -20,9 +20,10 @@ import com.exactpro.th2.converter.controllers.ConversionResult
 import com.exactpro.th2.converter.controllers.ConversionSummary
 import com.exactpro.th2.converter.controllers.ErrorMessage
 import com.exactpro.th2.converter.controllers.errors.NotAcceptableException
-import com.exactpro.th2.converter.model.Convertible
+import com.exactpro.th2.converter.`fun`.Convertible
+import com.exactpro.th2.converter.`fun`.ConvertibleBoxSpecV1
+import com.exactpro.th2.converter.`fun`.ConvertibleBoxSpecV2
 import com.exactpro.th2.converter.model.Th2Resource
-import com.exactpro.th2.converter.model.v1.box.GenericBoxSpecV1
 import com.exactpro.th2.converter.util.Mapper.YAML_MAPPER
 import com.exactpro.th2.converter.util.ProjectConstants.API_VERSION_V1
 import com.exactpro.th2.converter.util.ProjectConstants.SHORT_API_VERSION_V2
@@ -30,6 +31,8 @@ import com.exactpro.th2.infrarepo.ResourceType
 import com.exactpro.th2.infrarepo.git.GitterContext
 import com.exactpro.th2.infrarepo.repo.Repository
 import com.exactpro.th2.infrarepo.repo.RepositoryResource
+import com.exactpro.th2.model.latest.box.Spec
+import com.exactpro.th2.model.v1.box.SpecV1
 import com.fasterxml.jackson.module.kotlin.convertValue
 
 object Converter {
@@ -54,7 +57,7 @@ object Converter {
                 } finally {
                     gitter.unlock()
                 }
-                convertedResources = convert<GenericBoxSpecV1>(boxesToConvert, API_VERSION_V1, summary)
+                convertedResources = convert<SpecV1>(boxesToConvert, API_VERSION_V1, summary)
 
                 val linksInserter = LinksInserter()
                 linksInserter.insertLinksIntoBoxes(convertedResources, links)
@@ -83,7 +86,7 @@ object Converter {
                 )
 
                 val boxesToConvert = resources.filterTo(HashSet()) { boxKinds.contains(it.kind) }
-                convertedResources = convert<GenericBoxSpecV1>(boxesToConvert, API_VERSION_V1, summary)
+                convertedResources = convert<SpecV1>(boxesToConvert, API_VERSION_V1, summary)
 
                 val links = resources.filterTo(HashSet()) { it.kind.equals(linkKind) }
                 val linksInserter = LinksInserter()
@@ -95,7 +98,7 @@ object Converter {
         return ConversionResult(summary, convertedResources)
     }
 
-    private inline fun <reified From : Convertible> convert(
+    private inline fun <reified From> convert(
         resources: Set<RepositoryResource>,
         fromVersion: String,
         summary: ConversionSummary
@@ -115,7 +118,7 @@ object Converter {
 
             try {
                 val specFrom: From = YAML_MAPPER.convertValue(resource.spec)
-                val resourceFrom = Th2Resource(resource.apiVersion, resource.kind, resource.metadata, specFrom)
+                val resourceFrom = Th2Resource(resource.apiVersion, resource.kind, resource.metadata, wrap(specFrom))
                 convertedResources.add(resourceFrom.toNextVersion())
                 summary.convertedResourceNames.add(resource.metadata.name)
             } catch (e: Exception) {
@@ -123,5 +126,13 @@ object Converter {
             }
         }
         return convertedResources
+    }
+
+    private fun <From> wrap(specFrom: From): Convertible {
+        return when (specFrom) {
+            is SpecV1 -> ConvertibleBoxSpecV1(specFrom)
+            is Spec -> ConvertibleBoxSpecV2(specFrom)
+            else -> throw AssertionError("Provided spec class is not supported for conversion")
+        }
     }
 }
