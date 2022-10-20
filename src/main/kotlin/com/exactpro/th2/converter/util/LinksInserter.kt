@@ -50,8 +50,8 @@ class LinksInserter {
                 errors.add(
                     ErrorMessage(
                         linkName,
-                        "Link resource has one or more inappropriate fields. " +
-                            "Spec of your links may not match the expected ${link.version} version"
+                        "Spec of your links resource may not match the expected ${link.version} version. " +
+                            "For example, inappropriate field(s) may be present or required values missing"
                     )
                 )
                 errors.add(ErrorMessage(linkName, e.message))
