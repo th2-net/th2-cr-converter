@@ -11,7 +11,7 @@ ext {
     infra_repo_version = "1.1.16"
     resource_model_version = '1.2.1'
     slf4j_api_version = '2.0.3'
-    slf4j_impl_version = '2.19.0'
+    slf4j2_impl_version = '2.19.0'
     junit_jupiter_version = '5.9.0'
     commons_text_version = '1.10.0'
     jackson_dataformat_version = '2.14.0-rc1'
@@ -65,7 +65,8 @@ dependencies {
     implementation "io.fabric8:kubernetes-client:${fabric8_version}"
 
     implementation "org.slf4j:slf4j-api:$slf4j_api_version"
-    implementation "org.apache.logging.log4j:log4j-slf4j-impl:$slf4j_impl_version"
+    implementation "org.apache.logging.log4j:log4j-slf4j2-impl:$slf4j2_impl_version"
+    implementation "org.apache.logging.log4j:log4j-core:$slf4j2_impl_version"
 
     implementation "com.exactpro.th2:th2-custom-resource-model:$resource_model_version"
     implementation "com.exactpro.th2:infra-repo:$infra_repo_version"
