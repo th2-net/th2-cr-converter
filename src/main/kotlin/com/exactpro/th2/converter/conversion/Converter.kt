@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.exactpro.th2.converter.util
+package com.exactpro.th2.converter.conversion
 
 import com.exactpro.th2.converter.controllers.ConversionResult
 import com.exactpro.th2.converter.controllers.ConversionSummary
@@ -28,7 +28,7 @@ import com.exactpro.th2.converter.util.Mapper.YAML_MAPPER
 import com.exactpro.th2.converter.util.ProjectConstants.API_VERSION_V1
 import com.exactpro.th2.converter.util.ProjectConstants.SHORT_API_VERSION_V2
 import com.exactpro.th2.infrarepo.ResourceType
-import com.exactpro.th2.infrarepo.git.GitterContext
+import com.exactpro.th2.infrarepo.git.Gitter
 import com.exactpro.th2.infrarepo.repo.Repository
 import com.exactpro.th2.infrarepo.repo.RepositoryResource
 import com.exactpro.th2.model.latest.box.Spec
@@ -38,11 +38,9 @@ import com.fasterxml.jackson.module.kotlin.convertValue
 object Converter {
 
     fun convertFromGit(
-        sourceSchema: String,
         version: String,
-        gitterContext: GitterContext
+        gitter: Gitter
     ): ConversionResult {
-        val gitter = gitterContext.getGitter(sourceSchema)
         val summary = ConversionSummary()
         val convertedResources: List<Th2Resource>
 
@@ -96,6 +94,28 @@ object Converter {
             else -> throw NotAcceptableException("Conversion to specified version: '$targetVersion' is not supported")
         }
         return ConversionResult(summary, convertedResources)
+    }
+
+    fun convertLocal(
+        version: String,
+        gitter: Gitter
+    ): ConversionResult {
+        val summary = ConversionSummary()
+        val convertedResources: List<Th2Resource>
+
+        when (version) {
+            SHORT_API_VERSION_V2 -> {
+                val boxesToConvert = Repository.getAllBoxesAndStores(gitter, false)
+                val links = Repository.getResourcesByKind(gitter, ResourceType.Th2Link, false)
+                convertedResources = convert<SpecV1>(boxesToConvert, API_VERSION_V1, summary)
+
+                val linksInserter = LinksInserter()
+                linksInserter.insertLinksIntoBoxes(convertedResources, links)
+                linksInserter.addErrorsToSummary(summary)
+                return ConversionResult(summary, convertedResources)
+            }
+            else -> throw NotAcceptableException("Conversion to specified version: '$version' is not supported")
+        }
     }
 
     private inline fun <reified From> convert(

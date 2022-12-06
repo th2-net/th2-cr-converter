@@ -8,7 +8,7 @@ ext {
     kotlin_logging_version = '2.0.10'
     fabric8_version = '6.1.1'
     jackson_module_kotlin_version = '2.13.2'
-    infra_repo_version = "1.1.16"
+    infra_repo_version = "1.1.18-infra-2.0-3622070044-SNAPSHOT"
     resource_model_version = '1.2.1'
     slf4j_api_version = '2.0.3'
     slf4j2_impl_version = '2.19.0'

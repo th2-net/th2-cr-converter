@@ -16,6 +16,7 @@
 
 package com.exactpro.th2.converter
 
+import com.exactpro.th2.converter.conversion.LocalFilesConverter
 import mu.KotlinLogging
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
@@ -23,11 +24,23 @@ import org.springframework.boot.runApplication
 @SpringBootApplication
 open class ConverterApplication
 
+private val logger = KotlinLogging.logger {}
+
 fun main(args: Array<String>) {
-    try {
-        runApplication<ConverterApplication>(*args)
-    } catch (e: Exception) {
-        val logger = KotlinLogging.logger { }
-        logger.error("Exiting with exception", e)
+    when (val mode = if (args.isNotEmpty()) args[0] else "server") {
+        "server" -> {
+            try {
+                runApplication<ConverterApplication>(*args)
+            } catch (e: Exception) {
+                val logger = KotlinLogging.logger { }
+                logger.error("Exiting with exception", e)
+            }
+        }
+        "local" -> {
+            LocalFilesConverter(args[1], args[2]).convert()
+        }
+        else -> {
+            logger.error("Mode: {} is not supported", mode)
+        }
     }
 }

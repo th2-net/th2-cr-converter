@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.exactpro.th2.converter.util
+package com.exactpro.th2.converter.conversion
 
 import com.exactpro.th2.converter.controllers.ConversionSummary
 import com.exactpro.th2.converter.controllers.ErrorMessage

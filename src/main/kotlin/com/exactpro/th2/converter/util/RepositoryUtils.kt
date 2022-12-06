@@ -16,9 +16,9 @@
 
 package com.exactpro.th2.converter.util
 
-import com.exactpro.th2.converter.controllers.ConversionResult
 import com.exactpro.th2.converter.controllers.errors.NotAcceptableException
 import com.exactpro.th2.converter.controllers.errors.ServiceException
+import com.exactpro.th2.converter.model.Th2Resource
 import com.exactpro.th2.infrarepo.InconsistentRepositoryStateException
 import com.exactpro.th2.infrarepo.git.Gitter
 import com.exactpro.th2.infrarepo.git.GitterContext
@@ -31,13 +31,14 @@ object RepositoryUtils {
 
     private val logger = KotlinLogging.logger { }
 
-    fun updateRepositoryAndPush(
-        conversionResult: ConversionResult,
+    fun updateRepository(
+        convertedResources: List<Th2Resource>,
         gitter: Gitter,
+        func: (Gitter, RepositoryResource) -> Unit,
     ) {
         try {
-            for (convertedRes in conversionResult.convertedResources) {
-                Repository.update(
+            for (convertedRes in convertedResources) {
+                func(
                     gitter,
                     RepositoryResource(
                         convertedRes.apiVersion,
@@ -47,7 +48,6 @@ object RepositoryUtils {
                     )
                 )
             }
-            conversionResult.summary.commitRef = gitter.commitAndPush("Schema conversion")
         } catch (irse: InconsistentRepositoryStateException) {
             handleInconsistentRepoState(gitter, irse)
         } catch (e: Exception) {
