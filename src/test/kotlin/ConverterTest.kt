@@ -15,9 +15,9 @@
  */
 
 import com.exactpro.th2.converter.controllers.errors.NotAcceptableException
+import com.exactpro.th2.converter.conversion.Converter
 import com.exactpro.th2.converter.`fun`.ConvertibleBoxSpecV2
 import com.exactpro.th2.converter.model.Th2Resource
-import com.exactpro.th2.converter.util.Converter
 import com.exactpro.th2.converter.util.Mapper.YAML_MAPPER
 import com.exactpro.th2.infrarepo.repo.RepositoryResource
 import com.exactpro.th2.model.latest.box.Spec

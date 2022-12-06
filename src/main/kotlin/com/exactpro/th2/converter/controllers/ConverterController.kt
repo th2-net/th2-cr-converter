@@ -18,14 +18,14 @@ package com.exactpro.th2.converter.controllers
 
 import com.exactpro.th2.converter.config.ApplicationConfig
 import com.exactpro.th2.converter.controllers.errors.NotAcceptableException
-import com.exactpro.th2.converter.util.Converter.convertFromGit
-import com.exactpro.th2.converter.util.Converter.convertFromRequest
+import com.exactpro.th2.converter.conversion.Converter.convertFromGit
+import com.exactpro.th2.converter.conversion.Converter.convertFromRequest
 import com.exactpro.th2.converter.util.ProjectConstants
 import com.exactpro.th2.converter.util.ProjectConstants.PROPAGATION_DENY
 import com.exactpro.th2.converter.util.ProjectConstants.PROPAGATION_RULE
 import com.exactpro.th2.converter.util.ProjectConstants.SOURCE_BRANCH
 import com.exactpro.th2.converter.util.RepositoryUtils.schemaExists
-import com.exactpro.th2.converter.util.RepositoryUtils.updateRepositoryAndPush
+import com.exactpro.th2.converter.util.RepositoryUtils.updateRepository
 import com.exactpro.th2.converter.util.RepositoryUtils.updateSchemaK8sPropagation
 import com.exactpro.th2.infrarepo.git.GitterContext
 import com.exactpro.th2.infrarepo.repo.Repository
@@ -48,17 +48,18 @@ class ConverterController {
         checkRequestedVersion(targetVersion)
         val gitterContext = GitterContext.getContext(ApplicationConfig.git)
         checkSourceSchema(schemaName, gitterContext)
-        val conversionResult = convertFromGit(schemaName, targetVersion, gitterContext)
+        val gitter = gitterContext.getGitter(schemaName)
+        val conversionResult = convertFromGit(targetVersion, gitter)
         val currentResponse = conversionResult.summary
         if (currentResponse.hasErrors()) {
             return currentResponse
         }
 
-        val gitter = gitterContext.getGitter(schemaName)
         try {
             gitter.lock()
             Repository.removeLinkResources(gitter)
-            updateRepositoryAndPush(conversionResult, gitter)
+            updateRepository(conversionResult.convertedResources, gitter, Repository::update)
+            conversionResult.summary.commitRef = gitter.commitAndPush("Schema conversion")
         } finally {
             gitter.unlock()
         }
@@ -75,13 +76,12 @@ class ConverterController {
         checkRequestedVersion(targetVersion)
         val gitterContext: GitterContext = GitterContext.getContext(ApplicationConfig.git)
         checkSourceSchema(sourceSchemaName, gitterContext)
-        val conversionResult = convertFromGit(sourceSchemaName, targetVersion, gitterContext)
+        val sourceBranchGitter = gitterContext.getGitter(sourceSchemaName)
+        val conversionResult = convertFromGit(targetVersion, sourceBranchGitter)
         val currentResponse = conversionResult.summary
         if (currentResponse.hasErrors()) {
             return currentResponse
         }
-
-        val sourceBranchGitter = gitterContext.getGitter(sourceSchemaName)
 
         try {
             sourceBranchGitter.lock()
@@ -98,7 +98,8 @@ class ConverterController {
             newBranchGitter.createBranch(sourceSchemaName)
             updateSchemaK8sPropagation(PROPAGATION_RULE, newBranchGitter)
             Repository.removeLinkResources(newBranchGitter)
-            updateRepositoryAndPush(conversionResult, newBranchGitter)
+            updateRepository(conversionResult.convertedResources, newBranchGitter, Repository::update)
+            conversionResult.summary.commitRef = newBranchGitter.commitAndPush("Schema conversion")
         } finally {
             newBranchGitter.unlock()
         }
