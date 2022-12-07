@@ -65,7 +65,6 @@ fun ServiceV1.toService(): Service {
 
 fun ExtendedSettingsV1.toExtendedSettings(): ExtendedSettings {
     return ExtendedSettings(
-        chartConfig,
         envVariables,
         sharedMemory,
         replicas,

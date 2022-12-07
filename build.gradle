@@ -6,15 +6,15 @@ plugins {
 
 ext {
     kotlin_logging_version = '2.0.10'
-    fabric8_version = '6.1.1'
+    fabric8_version = '6.2.0'
     jackson_module_kotlin_version = '2.13.2'
     infra_repo_version = "1.1.18-infra-2.0-3622070044-SNAPSHOT"
-    resource_model_version = '1.2.1'
-    slf4j_api_version = '2.0.3'
+    resource_model_version = '1.2.2'
+    slf4j_api_version = '2.0.5'
     slf4j2_impl_version = '2.19.0'
     junit_jupiter_version = '5.9.0'
     commons_text_version = '1.10.0'
-    jackson_dataformat_version = '2.14.0-rc1'
+    jackson_dataformat_version = '2.14.0'
 }
 
 apply plugin: 'kotlin'

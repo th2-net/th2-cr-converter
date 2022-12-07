@@ -68,7 +68,10 @@ internal class ConverterTest {
 
     private val repoV1BoxesFullSet = sortedSetOf(
         Comparator.comparing { res -> res.metadata.name },
-        actV1, check1V1, fixServerV1, scriptV1
+        actV1,
+        check1V1,
+        fixServerV1,
+        scriptV1
     )
 
     /**
@@ -106,12 +109,14 @@ internal class ConverterTest {
             val v2MqPublisherPins = mqSection?.publishers?.map { ComparableMqPublisherV2(it) }
 
             testContentsMatch(
-                v2MqSubPins, v1MqSubPins,
+                v2MqSubPins,
+                v1MqSubPins,
                 resFailMessage + "Contents in MQ subscriber pins don't match"
             )
 
             testContentsMatch(
-                v2MqPublisherPins, v1MqPublisherPins,
+                v2MqPublisherPins,
+                v1MqPublisherPins,
                 resFailMessage + "Contents in MQ publisher pins don't match"
             )
 
@@ -124,12 +129,14 @@ internal class ConverterTest {
             val v2GrpcClientPins = convertedResPins.grpc?.client?.map { ComparableGrpcClientV2(it) }
 
             testContentsMatch(
-                v2GrpcClientPins, v1GrpcClientPins,
+                v2GrpcClientPins,
+                v1GrpcClientPins,
                 resFailMessage + "Contents in Grpc client pins don't match"
             )
 
             testContentsMatch(
-                v2GrpcServerPins, v1GrpcServerPins,
+                v2GrpcServerPins,
+                v1GrpcServerPins,
                 resFailMessage + "Contents in Grpc server pins don't match"
             )
         }
@@ -209,7 +216,8 @@ internal class ConverterTest {
         """.trimIndent().plus("\n")
 
         assertEquals(
-            expectedActService, actualActService,
+            expectedActService,
+            actualActService,
             "Service conversion in act v1 -> v2 failed"
         )
 
@@ -223,7 +231,8 @@ internal class ConverterTest {
         """.trimIndent().plus("\n")
 
         assertEquals(
-            expectedFixServerService, actualFixServerService,
+            expectedFixServerService,
+            actualFixServerService,
             "Service conversion in fix-server v1 -> v2 failed"
         )
 
@@ -239,7 +248,8 @@ internal class ConverterTest {
         """.trimIndent().plus("\n")
 
         assertEquals(
-            expectedCheck1Service, actualCheck1Service,
+            expectedCheck1Service,
+            actualCheck1Service,
             "Service conversion in check1 v1 -> v2 failed"
         )
     }
@@ -264,7 +274,8 @@ internal class ConverterTest {
             ?.map { sub -> sub.linkTo?.toSet() }
 
         assertEquals(
-            expectedFixServerLinks, actualFixServerLinks,
+            expectedFixServerLinks,
+            actualFixServerLinks,
             "Links were not added properly in fix-server"
         )
 
@@ -276,7 +287,8 @@ internal class ConverterTest {
             ?.map { client -> client.linkTo?.toSet() }
 
         assertEquals(
-            expectedActLinks, actualActLinks,
+            expectedActLinks,
+            actualActLinks,
             "Links were not added properly in act"
         )
 
@@ -288,7 +300,8 @@ internal class ConverterTest {
             ?.map { client -> client.linkTo?.toSet() }
 
         assertEquals(
-            expectedScriptLinks, actualScriptLinks,
+            expectedScriptLinks,
+            actualScriptLinks,
             "Links were not added properly in script"
         )
     }
@@ -308,7 +321,8 @@ internal class ConverterTest {
         val actualScriptCustomCfg: MutableMap<String, Any>? = actualScriptSpec.spec.customConfig
 
         assertEquals(
-            expectedScriptCustomCfg, actualScriptCustomCfg,
+            expectedScriptCustomCfg,
+            actualScriptCustomCfg,
             "Dictionary links were not added properly in V2 script custom config"
         )
     }
@@ -323,7 +337,8 @@ internal class ConverterTest {
 
     private fun readRepoResource(path: String): RepositoryResource {
         return YAML_MAPPER.readValue(
-            File(path), RepositoryResource::class.java
+            File(path),
+            RepositoryResource::class.java
         )
     }
 

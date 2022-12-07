@@ -125,7 +125,6 @@ object Converter {
     ): List<Th2Resource> {
         val convertedResources: MutableList<Th2Resource> = ArrayList()
         for (resource in resources) {
-
             if (!resource.apiVersion.equals(fromVersion)) {
                 summary.errorMessages.add(
                     ErrorMessage(
