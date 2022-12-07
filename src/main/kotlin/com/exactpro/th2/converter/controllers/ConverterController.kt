@@ -44,7 +44,6 @@ class ConverterController {
         @PathVariable schemaName: String,
         @PathVariable targetVersion: String
     ): ConversionSummary {
-
         checkRequestedVersion(targetVersion)
         val gitterContext = GitterContext.getContext(ApplicationConfig.git)
         checkSourceSchema(schemaName, gitterContext)
@@ -72,7 +71,6 @@ class ConverterController {
         @PathVariable newSchemaName: String,
         @PathVariable targetVersion: String
     ): ConversionSummary {
-
         checkRequestedVersion(targetVersion)
         val gitterContext: GitterContext = GitterContext.getContext(ApplicationConfig.git)
         checkSourceSchema(sourceSchemaName, gitterContext)
