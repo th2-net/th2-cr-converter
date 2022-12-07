@@ -23,7 +23,7 @@ import com.exactpro.th2.converter.model.Th2Resource
 import com.exactpro.th2.converter.util.Mapper.YAML_MAPPER
 import com.exactpro.th2.infrarepo.repo.RepositoryResource
 import com.exactpro.th2.model.latest.box.Spec
-import com.exactpro.th2.model.v1.link.LinkEndpoint
+import com.exactpro.th2.model.latest.link.LinkEndpoint
 import com.exactpro.th2.model.v1.link.LinkSpecV1
 import com.exactpro.th2.model.v1.link.MultiDictionary
 import com.fasterxml.jackson.module.kotlin.convertValue
@@ -64,8 +64,8 @@ class LinksInserter {
 
             mqLinks?.forEach { (_, from, to) ->
                 resourceMap
-                    .getOrPut(to.box) { HashMap() }
-                    .getOrPut(to.pin) { LinkTo() }
+                    .getOrPut(to.box!!) { HashMap() }
+                    .getOrPut(to.pin!!) { LinkTo() }
                     .mq.add(
                         LinkEndpoint(from.box, from.pin)
                     )
@@ -73,8 +73,8 @@ class LinksInserter {
 
             grpcLinks?.forEach { (_, from, to) ->
                 resourceMap
-                    .getOrPut(from.box) { HashMap() }
-                    .getOrPut(from.pin) { LinkTo() }
+                    .getOrPut(from.box!!) { HashMap() }
+                    .getOrPut(from.pin!!) { LinkTo() }
                     .grpc.add(
                         LinkEndpoint(to.box, to.pin)
                     )
