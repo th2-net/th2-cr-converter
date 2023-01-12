@@ -6,6 +6,7 @@ plugins {
     id "io.github.gradle-nexus.publish-plugin" version "1.0.0"
     id 'maven-publish'
     id 'signing'
+    id "org.owasp.dependencycheck" version "7.4.4"
 }
 
 ext {
@@ -20,6 +21,10 @@ ext {
     commons_text_version = '1.10.0'
     jackson_dataformat_version = '2.14.0'
     sharedDir          = file("${project.rootDir}/shared")
+}
+
+dependencyCheck {
+    formats=['SARIF']
 }
 
 apply plugin: 'kotlin'
@@ -220,11 +225,5 @@ compileKotlin {
 compileTestKotlin {
     kotlinOptions {
         jvmTarget = "11"
-    }
-}
-
-configurations {
-    compileClasspath {
-        resolutionStrategy.activateDependencyLocking()
     }
 }
