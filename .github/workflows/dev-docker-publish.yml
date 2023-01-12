@@ -12,5 +12,10 @@ jobs:
     with:
       build-target: 'Sonatype,Docker'
       docker-username: ${{ github.actor }}
+      runsOn: ubuntu-latest
     secrets:
       docker-password: ${{ secrets.GITHUB_TOKEN }}
+      sonatypeUsername: ${{ secrets.SONATYPE_NEXUS_USERNAME }}
+      sonatypePassword: ${{ secrets.SONATYPE_NEXUS_PASSWORD }}
+      sonatypeSigningKey: ${{ secrets.SONATYPE_GPG_ARMORED_KEY }}
+      sonatypeSigningPassword: ${{ secrets.SONATYPE_SIGNING_PASSWORD }}
