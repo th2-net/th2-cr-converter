@@ -227,3 +227,9 @@ compileTestKotlin {
         jvmTarget = "11"
     }
 }
+
+configurations {
+    compileClasspath {
+        resolutionStrategy.activateDependencyLocking()
+    }
+}
