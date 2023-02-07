@@ -10,11 +10,12 @@ on:
 
 jobs:
   build:
-    uses: th2-net/.github/.github/workflows/compound-java.yml@main
+    uses: th2-net/.github/.github/workflows/compound-java.yml@java-version-parameter
     with:
       build-target: 'Sonatype,Docker'
       runsOn: ubuntu-latest
       docker-username: ${{ github.actor }}
+      javaVersion: '17'
     secrets:
       sonatypeUsername: ${{ secrets.SONATYPE_NEXUS_USERNAME }}
       sonatypePassword: ${{ secrets.SONATYPE_NEXUS_PASSWORD }}
