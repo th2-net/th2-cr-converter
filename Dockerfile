@@ -1,13 +1,13 @@
-FROM gradle:7.4.2-jdk11 AS build
+FROM gradle:7.6-jdk17 AS build
 ARG release_version
 COPY ./ .
-RUN gradle --no-daemon clean build -Prelease_version=${release_version}
+RUN gradle --no-daemon clean installBootDist -Prelease_version=${release_version}
 
 RUN mkdir /home/app
-RUN cp ./build/libs/*.jar /home/app/application.jar
+RUN cp -r ./build/install/th2-cr-converter-boot/ /home/app/
 
-FROM adoptopenjdk/openjdk11:alpine
+FROM eclipse-temurin:17-alpine
 COPY --from=build /home/app /home/app
 WORKDIR /home/app
 
-ENTRYPOINT ["java", "-Dlog4j2.configurationFile=file:/var/th2/config/log4j2.properties", "-jar", "/home/app/application.jar"]
+ENTRYPOINT ["/home/app/th2-cr-converter-boot/bin/th2-cr-converter"]
