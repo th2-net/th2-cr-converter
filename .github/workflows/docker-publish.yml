@@ -15,7 +15,7 @@ jobs:
       build-target: 'Sonatype,Docker'
       runsOn: ubuntu-latest
       docker-username: ${{ github.actor }}
-      javaVersion: '17'
+      javaVersion: '11'
     secrets:
       sonatypeUsername: ${{ secrets.SONATYPE_NEXUS_USERNAME }}
       sonatypePassword: ${{ secrets.SONATYPE_NEXUS_PASSWORD }}
