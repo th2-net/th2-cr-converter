@@ -83,6 +83,11 @@ dependencies {
     detektPlugins("io.gitlab.arturbosch.detekt:detekt-formatting:$kotlin_detekt_version")
 }
 
+java {
+    withJavadocJar()
+    withSourcesJar()
+}
+
 jar {
     into("META-INF/maven/$project.group/$project.name") {
         from {
