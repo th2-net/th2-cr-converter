@@ -1,7 +1,7 @@
 FROM gradle:7.6-jdk17 AS build
 ARG release_version
 COPY ./ .
-RUN gradle --no-daemon clean installBootDist -Prelease_version=${release_version}
+RUN gradle --no-daemon clean build installBootDist -Prelease_version=${release_version}
 
 RUN mkdir /home/app
 RUN cp -r ./build/install/th2-cr-converter-boot/ /home/app/
