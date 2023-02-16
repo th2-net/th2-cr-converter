@@ -17,11 +17,9 @@
 package com.exactpro.th2.converter
 
 import com.exactpro.th2.converter.conversion.LocalFilesConverter
+import io.micronaut.runtime.Micronaut
 import mu.KotlinLogging
-import org.springframework.boot.autoconfigure.SpringBootApplication
-import org.springframework.boot.runApplication
 
-@SpringBootApplication
 open class ConverterApplication
 
 private val logger = KotlinLogging.logger {}
@@ -30,7 +28,12 @@ fun main(args: Array<String>) {
     when (val mode = if (args.isNotEmpty()) args[0] else "server") {
         "server" -> {
             try {
-                runApplication<ConverterApplication>(*args)
+                Micronaut
+                    .build(*args)
+                    .eagerInitConfiguration(true)
+                    .eagerInitSingletons(true)
+                    .mainClass(ConverterApplication::class.java)
+                    .start()
             } catch (e: Exception) {
                 val logger = KotlinLogging.logger { }
                 logger.error("Exiting with exception", e)

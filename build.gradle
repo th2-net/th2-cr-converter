@@ -1,7 +1,10 @@
 plugins {
-    id "org.springframework.boot" version "${springframework_version}"
-    id "io.gitlab.arturbosch.detekt" version "${kotlin_detekt_version}"
     id "org.jetbrains.kotlin.jvm" version "${kotlin_version}"
+    id "org.jetbrains.kotlin.kapt" version "${kotlin_version}"
+    id "org.jetbrains.kotlin.plugin.allopen" version "${kotlin_version}"
+    id "io.gitlab.arturbosch.detekt" version "${kotlin_detekt_version}"
+    id "io.micronaut.application" version "${micronautVersion}"
+
     id 'java'
     id "io.github.gradle-nexus.publish-plugin" version "1.0.0"
     id 'maven-publish'
@@ -19,7 +22,7 @@ ext {
     slf4j2_impl_version = '2.19.0'
     junit_jupiter_version = '5.9.2'
     commons_text_version = '1.10.0'
-    sharedDir          = file("${project.rootDir}/shared")
+    sharedDir = file("${project.rootDir}/shared")
 }
 
 apply plugin: 'kotlin'
@@ -30,10 +33,6 @@ apply plugin: 'java'
 group = 'com.exactpro.th2'
 version = release_version
 
-configurations.all {
-    exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
-    exclude group: 'org.springframework.boot', module: 'logback-classic'
-}
 
 repositories {
     mavenCentral()
@@ -53,9 +52,7 @@ repositories {
 }
 
 dependencies {
-    implementation platform("org.springframework.boot:spring-boot-dependencies:$springframework_version")
-    implementation "org.springframework.boot:spring-boot-starter-actuator"
-    implementation "org.springframework.boot:spring-boot-starter-web"
+    implementation("io.micronaut:micronaut-http-server-netty")
 
     implementation "io.fabric8:kubernetes-client:${fabric8_version}"
 
@@ -76,11 +73,12 @@ dependencies {
 
     testImplementation "org.junit.jupiter:junit-jupiter:$junit_jupiter_version"
     testImplementation group: 'org.jetbrains.kotlin', name: 'kotlin-test-junit5', version: kotlin_version
-    testImplementation('org.springframework.boot:spring-boot-starter-test') {
-        exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
-    }
 
     detektPlugins("io.gitlab.arturbosch.detekt:detekt-formatting:$kotlin_detekt_version")
+}
+
+application {
+    mainClass.set("com.exactpro.th2.converter.ConverterApplicationKt")
 }
 
 java {
@@ -124,14 +122,15 @@ tasks.withType(PublishToMavenRepository) {
 }
 
 tasks.withType(Sign) {
-    onlyIf { project.hasProperty('signingKey') &&
-            project.hasProperty('signingPassword')
+    onlyIf {
+        project.hasProperty('signingKey') &&
+                project.hasProperty('signingPassword')
     }
 }
 
 // disable running task 'initializeSonatypeStagingRepository' on a gitlab
-tasks.whenTaskAdded {task ->
-    if(task.name.equals('initializeSonatypeStagingRepository') &&
+tasks.whenTaskAdded { task ->
+    if (task.name.equals('initializeSonatypeStagingRepository') &&
             !(project.hasProperty('sonatypeUsername') && project.hasProperty('sonatypePassword'))
     ) {
         task.enabled = false

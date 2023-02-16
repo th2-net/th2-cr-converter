@@ -27,8 +27,8 @@ import jakarta.inject.Singleton
 @Produces
 @Singleton
 @Requires(classes = [HttpStatusException::class, ExceptionHandler::class])
-class ServiceExceptionHandler : ExceptionHandler<ServiceException, HttpResponse<ErrorResponse>> {
-    override fun handle(request: HttpRequest<*>?, exception: ServiceException): HttpResponse<ErrorResponse> {
-        return HttpResponse.serverError<ErrorResponse>().body(ErrorResponse(exception.errorCode, exception.message!!))
+class BadRequestExceptionHandler : ExceptionHandler<BadRequestException, HttpResponse<ErrorResponse>> {
+    override fun handle(request: HttpRequest<*>?, exception: BadRequestException): HttpResponse<ErrorResponse> {
+        return HttpResponse.badRequest<ErrorResponse>().body(ErrorResponse(exception.errorCode, exception.message!!))
     }
 }
