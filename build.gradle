@@ -17,12 +17,13 @@ ext {
     kotlin_logging_version = '2.0.10'
     fabric8_version = '6.4.1'
     jackson_module_kotlin_version = '2.14.2'
-    infra_repo_version = "1.2.3"
-    resource_model_version = '1.3.2'
+    infra_repo_version = "1.2.4"
+    resource_model_version = '1.3.3'
     slf4j_api_version = '2.0.5'
     slf4j2_impl_version = '2.19.0'
     junit_jupiter_version = '5.9.2'
     commons_text_version = '1.10.0'
+    okhttp_version = '4.10.0'
     sharedDir = file("${project.rootDir}/shared")
 }
 
@@ -56,6 +57,9 @@ dependencies {
     implementation("io.micronaut:micronaut-http-server-netty")
 
     implementation "io.fabric8:kubernetes-client:${fabric8_version}"
+
+    // TODO only used to avoid vulnerability, can be removed once fabric8 is updated
+    implementation "com.squareup.okhttp3:okhttp:${okhttp_version}"
 
     implementation "org.slf4j:slf4j-api:$slf4j_api_version"
     implementation "org.apache.logging.log4j:log4j-slf4j2-impl:$slf4j2_impl_version"
