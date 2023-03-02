@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 Exactpro (Exactpro Systems Limited)
+ * Copyright 2020-2022 Exactpro (Exactpro Systems Limited)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,12 @@
 
 package com.exactpro.th2.converter.controllers.errors
 
-import org.springframework.http.HttpStatus
-
-class NotAcceptableException(message: String?) :
-    ServiceException(HttpStatus.NOT_ACCEPTABLE, message)
+enum class ErrorCode {
+    VERSION_NOT_ALLOWED,
+    NAME_NOT_ALLOWED,
+    UNKNOWN_ERROR,
+    REPOSITORY_ERROR,
+    BRANCH_ALREADY_EXISTS,
+    BRANCH_NOT_FOUND,
+    BRANCH_NOT_ALLOWED
+}

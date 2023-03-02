@@ -17,7 +17,8 @@
 package com.exactpro.th2.converter.controllers
 
 import com.exactpro.th2.converter.config.ApplicationConfig
-import com.exactpro.th2.converter.controllers.errors.NotAcceptableException
+import com.exactpro.th2.converter.controllers.errors.BadRequestException
+import com.exactpro.th2.converter.controllers.errors.ErrorCode
 import com.exactpro.th2.converter.conversion.Converter.convertFromGit
 import com.exactpro.th2.converter.conversion.Converter.convertFromRequest
 import com.exactpro.th2.converter.util.ProjectConstants
@@ -30,19 +31,22 @@ import com.exactpro.th2.converter.util.RepositoryUtils.updateSchemaK8sPropagatio
 import com.exactpro.th2.infrarepo.git.GitterContext
 import com.exactpro.th2.infrarepo.repo.Repository
 import com.exactpro.th2.infrarepo.repo.RepositoryResource
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PathVariable
-import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RestController
+import io.micronaut.http.MediaType
+import io.micronaut.http.annotation.Body
+import io.micronaut.http.annotation.Controller
+import io.micronaut.http.annotation.Get
+import io.micronaut.http.annotation.Post
+import io.micronaut.http.annotation.Produces
+import org.eclipse.jgit.errors.EntryExistsException
 
-@RestController
+@Controller
+@Produces(MediaType.APPLICATION_JSON)
 class ConverterController {
 
-    @PostMapping("convert/{schemaName}/{targetVersion}")
+    @Post("convert/{schemaName}/{targetVersion}")
     fun convertInSameBranch(
-        @PathVariable schemaName: String,
-        @PathVariable targetVersion: String
+        schemaName: String,
+        targetVersion: String
     ): ConversionSummary {
         checkRequestedVersion(targetVersion)
         val gitterContext = GitterContext.getContext(ApplicationConfig.git)
@@ -65,11 +69,11 @@ class ConverterController {
         return conversionResult.summary
     }
 
-    @PostMapping("convert/{sourceSchemaName}/{newSchemaName}/{targetVersion}")
+    @Post("convert/{sourceSchemaName}/{newSchemaName}/{targetVersion}")
     fun convertInNewBranch(
-        @PathVariable sourceSchemaName: String,
-        @PathVariable newSchemaName: String,
-        @PathVariable targetVersion: String
+        sourceSchemaName: String,
+        newSchemaName: String,
+        targetVersion: String
     ): ConversionSummary {
         checkRequestedVersion(targetVersion)
         val gitterContext: GitterContext = GitterContext.getContext(ApplicationConfig.git)
@@ -98,38 +102,52 @@ class ConverterController {
             Repository.removeLinkResources(newBranchGitter)
             updateRepository(conversionResult.convertedResources, newBranchGitter, Repository::update)
             conversionResult.summary.commitRef = newBranchGitter.commitAndPush("Schema conversion")
+        } catch (e: EntryExistsException) {
+            throw BadRequestException(
+                ErrorCode.BRANCH_ALREADY_EXISTS,
+                "Branch '$newSchemaName' already exists on git"
+            )
         } finally {
             newBranchGitter.unlock()
         }
         return conversionResult.summary
     }
 
-    @GetMapping("convert/{targetVersion}")
+    @Get("convert/{targetVersion}")
     fun convertRequestedResources(
-        @PathVariable targetVersion: String,
-        @RequestBody resources: Set<RepositoryResource>
+        targetVersion: String,
+        @Body resources: Set<RepositoryResource>
     ): ConversionResult {
         checkRequestedVersion(targetVersion)
         return convertFromRequest(targetVersion, resources)
     }
 
-    @GetMapping("test")
+    @Get("test")
     fun testApi(): String {
         return "Conversion API is working !"
     }
 
     private fun checkRequestedVersion(version: String) {
         if (version !in ProjectConstants.ACCEPTED_VERSIONS) {
-            throw NotAcceptableException("Conversion to specified version: '$version' is not supported")
+            throw BadRequestException(
+                ErrorCode.VERSION_NOT_ALLOWED,
+                "Conversion to specified version: '$version' is not supported"
+            )
         }
     }
 
     private fun checkSourceSchema(schemaName: String, gitterContext: GitterContext) {
         if (!schemaExists(schemaName, gitterContext)) {
-            throw NotAcceptableException("Specified schema doesn't exist")
+            throw BadRequestException(
+                ErrorCode.BRANCH_NOT_FOUND,
+                "Specified schema doesn't exist"
+            )
         }
         if (schemaName == SOURCE_BRANCH) {
-            throw NotAcceptableException("Specified schema must not be the same as $SOURCE_BRANCH")
+            throw BadRequestException(
+                ErrorCode.BRANCH_NOT_ALLOWED,
+                "Specified schema must not be the same as $SOURCE_BRANCH"
+            )
         }
     }
 }

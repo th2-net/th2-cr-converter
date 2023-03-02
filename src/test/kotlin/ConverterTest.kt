@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import com.exactpro.th2.converter.controllers.errors.NotAcceptableException
+import com.exactpro.th2.converter.controllers.errors.BadRequestException
 import com.exactpro.th2.converter.conversion.Converter
 import com.exactpro.th2.converter.`fun`.ConvertibleBoxSpecV2
 import com.exactpro.th2.converter.model.Th2Resource
@@ -189,7 +189,7 @@ internal class ConverterTest {
      */
     @Test
     fun testConvertFromRequestTargetVersion() {
-        assertThrows<NotAcceptableException>("Function didn't throw Exception when specified unsupported version") {
+        assertThrows<BadRequestException>("Function didn't throw Exception when specified unsupported version") {
             Converter.convertFromRequest("v4", repoV1BoxesFullSet)
         }
         assertDoesNotThrow("Function threw Exception when specified supported version") {

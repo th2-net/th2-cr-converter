@@ -6,7 +6,6 @@ on:
       - master
     paths:
       - gradle.properties
-#    - package_info.json
 
 jobs:
   build:

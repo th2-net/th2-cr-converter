@@ -19,7 +19,8 @@ package com.exactpro.th2.converter.conversion
 import com.exactpro.th2.converter.controllers.ConversionResult
 import com.exactpro.th2.converter.controllers.ConversionSummary
 import com.exactpro.th2.converter.controllers.ErrorMessage
-import com.exactpro.th2.converter.controllers.errors.NotAcceptableException
+import com.exactpro.th2.converter.controllers.errors.BadRequestException
+import com.exactpro.th2.converter.controllers.errors.ErrorCode
 import com.exactpro.th2.converter.`fun`.Convertible
 import com.exactpro.th2.converter.`fun`.ConvertibleBoxSpecV1
 import com.exactpro.th2.converter.`fun`.ConvertibleBoxSpecV2
@@ -62,7 +63,10 @@ object Converter {
                 linksInserter.addErrorsToSummary(summary)
                 return ConversionResult(summary, convertedResources)
             }
-            else -> throw NotAcceptableException("Conversion to specified version: '$version' is not supported")
+            else -> throw BadRequestException(
+                ErrorCode.VERSION_NOT_ALLOWED,
+                "Conversion to specified version: '$version' is not supported"
+            )
         }
     }
 
@@ -91,7 +95,10 @@ object Converter {
                 linksInserter.insertLinksIntoBoxes(convertedResources, links)
                 linksInserter.addErrorsToSummary(summary)
             }
-            else -> throw NotAcceptableException("Conversion to specified version: '$targetVersion' is not supported")
+            else -> throw BadRequestException(
+                ErrorCode.VERSION_NOT_ALLOWED,
+                "Conversion to specified version: '$targetVersion' is not supported"
+            )
         }
         return ConversionResult(summary, convertedResources)
     }
@@ -114,7 +121,10 @@ object Converter {
                 linksInserter.addErrorsToSummary(summary)
                 return ConversionResult(summary, convertedResources)
             }
-            else -> throw NotAcceptableException("Conversion to specified version: '$version' is not supported")
+            else -> throw BadRequestException(
+                ErrorCode.VERSION_NOT_ALLOWED,
+                "Conversion to specified version: '$version' is not supported"
+            )
         }
     }
 

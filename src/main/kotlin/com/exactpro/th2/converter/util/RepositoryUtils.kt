@@ -16,7 +16,7 @@
 
 package com.exactpro.th2.converter.util
 
-import com.exactpro.th2.converter.controllers.errors.NotAcceptableException
+import com.exactpro.th2.converter.controllers.errors.ErrorCode
 import com.exactpro.th2.converter.controllers.errors.ServiceException
 import com.exactpro.th2.converter.model.Th2Resource
 import com.exactpro.th2.infrarepo.InconsistentRepositoryStateException
@@ -25,7 +25,6 @@ import com.exactpro.th2.infrarepo.git.GitterContext
 import com.exactpro.th2.infrarepo.repo.Repository
 import com.exactpro.th2.infrarepo.repo.RepositoryResource
 import mu.KotlinLogging
-import org.springframework.http.HttpStatus
 
 object RepositoryUtils {
 
@@ -53,7 +52,10 @@ object RepositoryUtils {
         } catch (e: Exception) {
             logger.error("Exception updating repository for branch \"{}\"", gitter.branch, e)
             gitter.reset()
-            throw NotAcceptableException(e.message)
+            throw ServiceException(
+                ErrorCode.REPOSITORY_ERROR,
+                e.message
+            )
         }
     }
 
@@ -69,7 +71,10 @@ object RepositoryUtils {
             } catch (e: Exception) {
                 logger.error("Exception updating repository for branch \"{}\"", gitter.branch, e)
                 gitter.reset()
-                throw NotAcceptableException(e.message)
+                throw ServiceException(
+                    ErrorCode.REPOSITORY_ERROR,
+                    e.message
+                )
             }
         }
         return false
@@ -77,7 +82,7 @@ object RepositoryUtils {
 
     private fun handleInconsistentRepoState(gitter: Gitter, irse: InconsistentRepositoryStateException) {
         logger.error("Inconsistent repository state exception for branch \"{}\"", gitter.branch, irse)
-        val se = ServiceException(HttpStatus.INTERNAL_SERVER_ERROR, irse.message)
+        val se = ServiceException(ErrorCode.REPOSITORY_ERROR, irse.message)
         se.addSuppressed(irse)
         try {
             gitter.recreateCache()
@@ -93,7 +98,7 @@ object RepositoryUtils {
             ctx.branches
         } catch (e: Exception) {
             throw ServiceException(
-                HttpStatus.INTERNAL_SERVER_ERROR,
+                ErrorCode.UNKNOWN_ERROR,
                 e.message
             )
         }
