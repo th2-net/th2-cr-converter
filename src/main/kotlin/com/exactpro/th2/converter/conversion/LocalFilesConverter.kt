@@ -19,19 +19,24 @@ package com.exactpro.th2.converter.conversion
 import com.exactpro.th2.converter.config.ApplicationConfig
 import com.exactpro.th2.converter.model.Th2Resource
 import com.exactpro.th2.converter.util.RepositoryUtils.updateRepository
+import com.exactpro.th2.converter.util.SchemaVersion
 import com.exactpro.th2.infrarepo.ResourceType
 import com.exactpro.th2.infrarepo.git.GitterContext
 import com.exactpro.th2.infrarepo.repo.Repository
 import com.exactpro.th2.infrarepo.repo.RepositoryResource
 import mu.KotlinLogging
 
-class LocalFilesConverter(private val schema: String, private val version: String) {
+class LocalFilesConverter(
+    private val schema: String,
+    private val currentVersion: SchemaVersion,
+    private val targetVersion: SchemaVersion
+) {
     private val logger = KotlinLogging.logger {}
     private val gitterContext = GitterContext.getContext(ApplicationConfig.git)
 
     fun convert() {
         val gitter = gitterContext.getGitter(schema)
-        val result = Converter.convertLocal(version, gitter)
+        val result = Converter.convertLocal(currentVersion, targetVersion, gitter)
         val dictionaries = Repository.getResourcesByKind(gitter, ResourceType.Th2Dictionary, false)
         if (result.summary.hasErrors()) {
             logger.error("Conversion for schema {} failed due to following errors", schema)

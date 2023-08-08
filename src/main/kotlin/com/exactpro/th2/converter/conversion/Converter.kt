@@ -24,130 +24,149 @@ import com.exactpro.th2.converter.controllers.errors.ErrorCode
 import com.exactpro.th2.converter.`fun`.Convertible
 import com.exactpro.th2.converter.`fun`.ConvertibleBoxSpecV1
 import com.exactpro.th2.converter.`fun`.ConvertibleBoxSpecV2
+import com.exactpro.th2.converter.`fun`.ConvertibleBoxSpecV2x2
 import com.exactpro.th2.converter.model.Th2Resource
 import com.exactpro.th2.converter.util.Mapper.YAML_MAPPER
-import com.exactpro.th2.converter.util.ProjectConstants.API_VERSION_V1
-import com.exactpro.th2.converter.util.ProjectConstants.SHORT_API_VERSION_V2
+import com.exactpro.th2.converter.util.RepositoryContext
+import com.exactpro.th2.converter.util.SchemaVersion
 import com.exactpro.th2.infrarepo.ResourceType
 import com.exactpro.th2.infrarepo.git.Gitter
 import com.exactpro.th2.infrarepo.repo.Repository
 import com.exactpro.th2.infrarepo.repo.RepositoryResource
 import com.exactpro.th2.model.latest.box.Spec
 import com.exactpro.th2.model.v1.box.SpecV1
+import com.exactpro.th2.model.v2.SpecV2
 import com.fasterxml.jackson.module.kotlin.convertValue
 
 object Converter {
-
     fun convertFromGit(
-        version: String,
+        currentVersion: SchemaVersion,
+        targetVersion: SchemaVersion,
         gitter: Gitter
     ): ConversionResult {
         val summary = ConversionSummary()
-        val convertedResources: List<Th2Resource>
+        val repositoryContext = RepositoryContext.load(gitter)
 
-        when (version) {
-            SHORT_API_VERSION_V2 -> {
-                val boxesToConvert: Set<RepositoryResource>
-                val links: Set<RepositoryResource>
-                try {
-                    gitter.lock()
-                    boxesToConvert = HashSet(Repository.getAllBoxesAndStores(gitter))
-                    links = HashSet(Repository.getResourcesByKind(gitter, ResourceType.Th2Link))
-                } finally {
-                    gitter.unlock()
-                }
-                convertedResources = convert<SpecV1>(boxesToConvert, API_VERSION_V1, summary)
-
-                val linksInserter = LinksInserter()
-                linksInserter.insertLinksIntoBoxes(convertedResources, links)
-                linksInserter.addErrorsToSummary(summary)
-                return ConversionResult(summary, convertedResources)
-            }
-            else -> throw BadRequestException(
-                ErrorCode.VERSION_NOT_ALLOWED,
-                "Conversion to specified version: '$version' is not supported"
-            )
+        if (!validateCurrentSchemaVersion(repositoryContext.allResources, currentVersion.apiVersion, summary)) {
+            return ConversionResult(summary, emptyList())
         }
+
+        return processSwitching(currentVersion, targetVersion, repositoryContext, summary)
     }
 
     fun convertFromRequest(
-        targetVersion: String,
+        currentVersion: SchemaVersion,
+        targetVersion: SchemaVersion,
         resources: Set<RepositoryResource>
     ): ConversionResult {
         val summary = ConversionSummary()
-        val convertedResources: List<Th2Resource>
+        val linkKind = ResourceType.Th2Link.kind()
+        val boxKinds = setOf<String>(
+            ResourceType.Th2Box.kind(),
+            ResourceType.Th2CoreBox.kind(),
+            ResourceType.Th2Estore.kind(),
+            ResourceType.Th2Mstore.kind()
+        )
 
-        when (targetVersion) {
-            SHORT_API_VERSION_V2 -> {
-                val linkKind = ResourceType.Th2Link.kind()
-                val boxKinds = setOf<String>(
-                    ResourceType.Th2Box.kind(),
-                    ResourceType.Th2CoreBox.kind(),
-                    ResourceType.Th2Estore.kind(),
-                    ResourceType.Th2Mstore.kind()
-                )
+        val boxes = resources.filterTo(HashSet()) { boxKinds.contains(it.kind) }
+        val links = resources.filterTo(HashSet()) { it.kind.equals(linkKind) }
 
-                val boxesToConvert = resources.filterTo(HashSet()) { boxKinds.contains(it.kind) }
-                convertedResources = convert<SpecV1>(boxesToConvert, API_VERSION_V1, summary)
-
-                val links = resources.filterTo(HashSet()) { it.kind.equals(linkKind) }
-                val linksInserter = LinksInserter()
-                linksInserter.insertLinksIntoBoxes(convertedResources, links)
-                linksInserter.addErrorsToSummary(summary)
-            }
-            else -> throw BadRequestException(
-                ErrorCode.VERSION_NOT_ALLOWED,
-                "Conversion to specified version: '$targetVersion' is not supported"
-            )
+        val repositoryContext = RepositoryContext(boxes, links)
+        if (!validateCurrentSchemaVersion(repositoryContext.allResources, currentVersion.apiVersion, summary)) {
+            return ConversionResult(summary, emptyList())
         }
-        return ConversionResult(summary, convertedResources)
+
+        return processSwitching(currentVersion, targetVersion, repositoryContext, summary)
     }
 
     fun convertLocal(
-        version: String,
+        currentVersion: SchemaVersion,
+        targetVersion: SchemaVersion,
         gitter: Gitter
     ): ConversionResult {
         val summary = ConversionSummary()
-        val convertedResources: List<Th2Resource>
 
-        when (version) {
-            SHORT_API_VERSION_V2 -> {
-                val boxesToConvert = Repository.getAllBoxesAndStores(gitter, false)
-                val links = Repository.getResourcesByKind(gitter, ResourceType.Th2Link, false)
-                convertedResources = convert<SpecV1>(boxesToConvert, API_VERSION_V1, summary)
+        val boxes = Repository.getAllBoxesAndStores(gitter, false)
+        val links = Repository.getResourcesByKind(gitter, ResourceType.Th2Link, false)
+        val repositoryContext = RepositoryContext(boxes, links)
 
+        if (!validateCurrentSchemaVersion(repositoryContext.allResources, currentVersion.apiVersion, summary)) {
+            return ConversionResult(summary, emptyList())
+        }
+
+        return processSwitching(currentVersion, targetVersion, repositoryContext, summary)
+    }
+
+    private fun processSwitching(
+        currentVersion: SchemaVersion,
+        targetVersion: SchemaVersion,
+        repositoryContext: RepositoryContext,
+        summary: ConversionSummary
+    ): ConversionResult {
+        when (targetVersion) {
+            SchemaVersion.V1 -> throw BadRequestException(
+                ErrorCode.VERSION_NOT_ALLOWED,
+                "Conversion to specified version: '${SchemaVersion.V1}' is not supported"
+            )
+
+            SchemaVersion.V2 -> {
+                if (currentVersion != SchemaVersion.V1) {
+                    throw BadRequestException(
+                        ErrorCode.VERSION_NOT_ALLOWED,
+                        """Conversion to v2 is only allowed from v1.specified. 2
+                            |specified current version: '$currentVersion' is not supported
+                        """.trimMargin()
+                    )
+                }
+                val convertedResources = convert<SpecV1>(repositoryContext.boxes, summary)
                 val linksInserter = LinksInserter()
-                linksInserter.insertLinksIntoBoxes(convertedResources, links)
+                linksInserter.insertLinksIntoBoxes(convertedResources, repositoryContext.links)
                 linksInserter.addErrorsToSummary(summary)
                 return ConversionResult(summary, convertedResources)
             }
-            else -> throw BadRequestException(
-                ErrorCode.VERSION_NOT_ALLOWED,
-                "Conversion to specified version: '$version' is not supported"
-            )
+
+            SchemaVersion.V2_2 -> {
+                when (currentVersion) {
+                    SchemaVersion.V1 -> {
+                        var convertedResources = convert<SpecV1>(repositoryContext.boxes, summary)
+                        val linksInserter = LinksInserter()
+                        linksInserter.insertLinksIntoBoxes(convertedResources, repositoryContext.links)
+                        linksInserter.addErrorsToSummary(summary)
+                        val repositoryResourcesV2 = convertedResources.map(Th2Resource::toRepositoryResource)
+                        convertedResources = convert<SpecV2>(repositoryResourcesV2, summary)
+                        return ConversionResult(summary, convertedResources)
+                    }
+                    SchemaVersion.V2 -> {
+                        val convertedResources = convert<SpecV2>(repositoryContext.boxes, summary)
+                        return ConversionResult(summary, convertedResources)
+                    }
+                    else -> {
+                        throw BadRequestException(
+                            ErrorCode.VERSION_NOT_ALLOWED,
+                            """Conversion to v2.2 is only allowed from v1 or v2.specified. 
+                                        |specified current version: '$currentVersion' is not supported
+                            """.trimMargin()
+                        )
+                    }
+                }
+            }
         }
     }
 
     private inline fun <reified From> convert(
-        resources: Set<RepositoryResource>,
-        fromVersion: String,
+        resources: Collection<RepositoryResource>,
         summary: ConversionSummary
     ): List<Th2Resource> {
         val convertedResources: MutableList<Th2Resource> = ArrayList()
         for (resource in resources) {
-            if (!resource.apiVersion.equals(fromVersion)) {
-                summary.errorMessages.add(
-                    ErrorMessage(
-                        resource.metadata.name,
-                        "Resource must be of version: $fromVersion"
-                    )
-                )
-                continue
-            }
-
             try {
                 val specFrom: From = YAML_MAPPER.convertValue(resource.spec)
-                val resourceFrom = Th2Resource(resource.apiVersion, resource.kind, resource.metadata, wrap(specFrom))
+                val resourceFrom = Th2Resource(
+                    SchemaVersion.fromApiVersion(resource.apiVersion),
+                    resource.kind,
+                    resource.metadata,
+                    wrap(specFrom)
+                )
                 convertedResources.add(resourceFrom.toNextVersion())
                 summary.convertedResourceNames.add(resource.metadata.name)
             } catch (e: Exception) {
@@ -157,10 +176,31 @@ object Converter {
         return convertedResources
     }
 
+    private fun validateCurrentSchemaVersion(
+        resources: Set<RepositoryResource>,
+        currentVersion: String,
+        summary: ConversionSummary
+    ): Boolean {
+        var isValid = true
+        resources.forEach { resource ->
+            if (currentVersion != resource.apiVersion) {
+                isValid = false
+                summary.errorMessages.add(
+                    ErrorMessage(
+                        resource.metadata.name,
+                        "Resource api version ${resource.version}. is different requested api version: $currentVersion"
+                    )
+                )
+            }
+        }
+        return isValid
+    }
+
     private fun <From> wrap(specFrom: From): Convertible {
         return when (specFrom) {
             is SpecV1 -> ConvertibleBoxSpecV1(specFrom)
-            is Spec -> ConvertibleBoxSpecV2(specFrom)
+            is SpecV2 -> ConvertibleBoxSpecV2(specFrom)
+            is Spec -> ConvertibleBoxSpecV2x2(specFrom)
             else -> throw AssertionError("Provided spec class is not supported for conversion")
         }
     }

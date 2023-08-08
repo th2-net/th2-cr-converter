@@ -16,7 +16,6 @@
 
 package com.exactpro.th2.converter.`fun`
 
-import com.exactpro.th2.model.latest.box.Spec
 import com.exactpro.th2.model.latest.box.pins.GrpcClient
 import com.exactpro.th2.model.latest.box.pins.GrpcSection
 import com.exactpro.th2.model.latest.box.pins.GrpcServer
@@ -26,17 +25,18 @@ import com.exactpro.th2.model.latest.box.pins.MqSubscriber
 import com.exactpro.th2.model.latest.box.pins.PinSpec
 import com.exactpro.th2.model.v1.box.SpecV1
 import com.exactpro.th2.model.v1.box.pins.PinType
+import com.exactpro.th2.model.v2.SpecV2
 
 class ConvertibleBoxSpecV1(val spec: SpecV1) : Convertible {
     override fun toNextVersion(): Convertible {
         return ConvertibleBoxSpecV2(
-            Spec(
+            SpecV2(
                 spec.imageName,
                 spec.imageVersion,
                 spec.type,
                 spec.versionRange,
                 spec.customConfig,
-                spec.extendedSettings?.toExtendedSettings(),
+                spec.extendedSettings?.toExtendedSettingsV2(),
                 convertPins().takeIf { it.isNotEmpty() },
                 spec.prometheus,
                 spec.loggingConfig,

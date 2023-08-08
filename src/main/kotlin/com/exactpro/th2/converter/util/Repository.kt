@@ -20,6 +20,7 @@ import com.exactpro.th2.converter.controllers.errors.ErrorCode
 import com.exactpro.th2.converter.controllers.errors.ServiceException
 import com.exactpro.th2.converter.model.Th2Resource
 import com.exactpro.th2.infrarepo.InconsistentRepositoryStateException
+import com.exactpro.th2.infrarepo.ResourceType
 import com.exactpro.th2.infrarepo.git.Gitter
 import com.exactpro.th2.infrarepo.git.GitterContext
 import com.exactpro.th2.infrarepo.repo.Repository
@@ -27,6 +28,11 @@ import com.exactpro.th2.infrarepo.repo.RepositoryResource
 import mu.KotlinLogging
 
 object RepositoryUtils {
+
+    const val PROPAGATION_RULE = "rule"
+    const val PROPAGATION_DENY = "deny"
+
+    const val SOURCE_BRANCH = "master"
 
     private val logger = KotlinLogging.logger { }
 
@@ -103,5 +109,25 @@ object RepositoryUtils {
             )
         }
         return branches.contains(schemaName)
+    }
+}
+
+data class RepositoryContext(
+    val boxes: Set<RepositoryResource>,
+    val links: Set<RepositoryResource>
+) {
+    val allResources = boxes.plus(links)
+
+    companion object {
+        fun load(gitter: Gitter): RepositoryContext {
+            try {
+                gitter.lock()
+                val boxes = HashSet(Repository.getAllBoxesAndStores(gitter))
+                val links = HashSet(Repository.getResourcesByKind(gitter, ResourceType.Th2Link))
+                return RepositoryContext(boxes, links)
+            } finally {
+                gitter.unlock()
+            }
+        }
     }
 }

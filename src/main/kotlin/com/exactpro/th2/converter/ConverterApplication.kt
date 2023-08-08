@@ -17,6 +17,7 @@
 package com.exactpro.th2.converter
 
 import com.exactpro.th2.converter.conversion.LocalFilesConverter
+import com.exactpro.th2.converter.util.SchemaVersion
 import io.micronaut.runtime.Micronaut
 import mu.KotlinLogging
 
@@ -40,7 +41,9 @@ fun main(args: Array<String>) {
             }
         }
         "local" -> {
-            LocalFilesConverter(args[1], args[2]).convert()
+            val currentVersion = enumValueOf<SchemaVersion>(args[1])
+            val targetVersion = enumValueOf<SchemaVersion>(args[2])
+            LocalFilesConverter(args[1], currentVersion, targetVersion).convert()
         }
         else -> {
             logger.error("Mode: {} is not supported", mode)

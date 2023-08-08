@@ -27,34 +27,42 @@ import com.exactpro.th2.model.v1.box.extendedsettings.ServiceV1
 import com.exactpro.th2.model.v1.box.extendedsettings.ServiceV1.ServiceType.ClusterIP
 import com.exactpro.th2.model.v1.box.extendedsettings.ServiceV1.ServiceType.LoadBalancer
 import com.exactpro.th2.model.v1.box.extendedsettings.ServiceV1.ServiceType.NodePort
+import com.exactpro.th2.model.v2.ClusterIpConfigV2
+import com.exactpro.th2.model.v2.ExtendedSettingsV2
+import com.exactpro.th2.model.v2.LoadBalancerConfigV2
+import com.exactpro.th2.model.v2.NodePortConfigV2
+import com.exactpro.th2.model.v2.ServiceV2
 
-fun ServiceV1.toService(): Service {
-    val nodePort: MutableList<NodePortConfig> = ArrayList()
-    val clusterIP: MutableList<ClusterIpConfig> = ArrayList()
-    val loadBalancer: MutableList<LoadBalancerConfig> = ArrayList()
+fun ServiceV1.toServiceV2(): ServiceV2 {
+    val nodePort: MutableList<NodePortConfigV2> = ArrayList()
+    val clusterIP: MutableList<ClusterIpConfigV2> = ArrayList()
+    val loadBalancer: MutableList<LoadBalancerConfigV2> = ArrayList()
 
     val addToRelevantList: (ServiceEndpoint) -> Unit = when (type) {
         NodePort -> {
             {
-                nodePort.add(NodePortConfig(it.name, it.targetPort, it.nodePort ?: -1))
+                nodePort.add(NodePortConfigV2(it.name, it.targetPort, it.nodePort ?: -1))
             }
         }
+
         ClusterIP -> {
             {
-                clusterIP.add(ClusterIpConfig(it.name, it.targetPort))
+                clusterIP.add(ClusterIpConfigV2(it.name, it.targetPort))
             }
         }
+
         LoadBalancer -> {
             {
-                loadBalancer.add(LoadBalancerConfig(it.name, it.targetPort))
+                loadBalancer.add(LoadBalancerConfigV2(it.name, it.targetPort))
             }
         }
+
         null -> { _ -> }
     }
 
     endpoints?.forEach(addToRelevantList)
 
-    return Service(
+    return ServiceV2(
         enabled,
         nodePort.takeIf { it.isNotEmpty() },
         clusterIP.takeIf { it.isNotEmpty() },
@@ -63,7 +71,158 @@ fun ServiceV1.toService(): Service {
     )
 }
 
-fun ExtendedSettingsV1.toExtendedSettings(): ExtendedSettings {
+fun ServiceV2.toService(): Service {
+    if (ingress == null) {
+        return Service(
+            enabled,
+            this.nodePort?.map { NodePortConfig(it.name, it.containerPort, it.exposedPort) },
+            this.clusterIP?.map { ClusterIpConfig(it.name, it.containerPort) },
+            this.loadBalancer?.map { LoadBalancerConfig(it.name, it.containerPort) }
+        )
+    }
+    assert(ingress!!.urlPaths!!.size == 1) {
+        "Service can't be upgraded to version v2.2. 'ingress.urlPaths' must contain 1 item"
+    }
+
+    val multiConfigErrorMessage =
+        "Service can't be upgraded to next version. only one out of nodePort, clusterIP or loadBalancer is allowed"
+    val urlPath = ingress!!.urlPaths!![0]
+    val port8080 = 8080
+    val port80 = 80
+    if (nodePort != null) {
+        assert(clusterIP == null) { multiConfigErrorMessage }
+        assert(loadBalancer == null) { multiConfigErrorMessage }
+        val nodePortsV2 = nodePort!!.map { NodePortConfig(it.name, it.containerPort, it.exposedPort) }.toMutableList()
+        if (nodePort!!.size == 1) {
+            val firstPort = nodePortsV2[0]
+            nodePortsV2[0] = NodePortConfig(firstPort.name, firstPort.containerPort, firstPort.exposedPort, urlPath)
+        } else {
+            var contains8080 = false
+            var contains80 = false
+            nodePortsV2.forEachIndexed breaking@{ index, nodePortConfig ->
+                if (nodePortConfig.containerPort == port8080) {
+                    val port = nodePortsV2[index]
+                    nodePortsV2[index] = NodePortConfig(port.name, port.containerPort, port.exposedPort, urlPath)
+                    contains8080 = true
+                    return@breaking
+                }
+            }
+            if (!contains8080) {
+                nodePortsV2.forEachIndexed breaking@{ index, nodePortConfig ->
+                    if (nodePortConfig.containerPort == port80) {
+                        val port = nodePortsV2[index]
+                        nodePortsV2[index] = NodePortConfig(port.name, port.containerPort, port.exposedPort, urlPath)
+                        contains80 = true
+                        return@breaking
+                    }
+                }
+            }
+            if (!contains80 && !contains8080) {
+                val firstPort = nodePortsV2[0]
+                nodePortsV2[0] = NodePortConfig(firstPort.name, firstPort.containerPort, firstPort.exposedPort, urlPath)
+            }
+        }
+        return Service(
+            enabled,
+            nodePort = nodePortsV2
+        )
+    } else if (clusterIP != null) {
+        assert(nodePort == null) { multiConfigErrorMessage }
+        assert(loadBalancer == null) { multiConfigErrorMessage }
+        val clusterIPV2 = clusterIP!!.map { ClusterIpConfig(it.name, it.containerPort) }.toMutableList()
+        if (clusterIP!!.size == 1) {
+            val firstPort = clusterIPV2[0]
+            clusterIPV2[0] = ClusterIpConfig(firstPort.name, firstPort.containerPort, urlPath)
+        } else {
+            var contains8080 = false
+            var contains80 = false
+            clusterIPV2.forEachIndexed breaking@{ index, nodePortConfig ->
+                if (nodePortConfig.containerPort == port8080) {
+                    val port = clusterIPV2[index]
+                    clusterIPV2[index] = ClusterIpConfig(port.name, port.containerPort, urlPath)
+                    contains8080 = true
+                    return@breaking
+                }
+            }
+            if (!contains8080) {
+                clusterIPV2.forEachIndexed breaking@{ index, nodePortConfig ->
+                    if (nodePortConfig.containerPort == port80) {
+                        val port = clusterIPV2[index]
+                        clusterIPV2[index] = ClusterIpConfig(port.name, port.containerPort, urlPath)
+                        contains80 = true
+                        return@breaking
+                    }
+                }
+            }
+            if (!contains80 && !contains8080) {
+                val firstPort = clusterIPV2[0]
+                clusterIPV2[0] = ClusterIpConfig(firstPort.name, firstPort.containerPort, urlPath)
+            }
+        }
+        return Service(
+            enabled,
+            clusterIP = clusterIPV2
+        )
+    } else if (loadBalancer != null) {
+        assert(clusterIP == null) { multiConfigErrorMessage }
+        assert(nodePort == null) { multiConfigErrorMessage }
+        val loadBalancerV2 = loadBalancer!!.map { LoadBalancerConfig(it.name, it.containerPort) }.toMutableList()
+        if (loadBalancer!!.size == 1) {
+            val firstPort = loadBalancerV2[0]
+            loadBalancerV2[0] = LoadBalancerConfig(firstPort.name, firstPort.containerPort, urlPath)
+        } else {
+            var contains8080 = false
+            var contains80 = false
+            loadBalancerV2.forEachIndexed breaking@{ index, nodePortConfig ->
+                if (nodePortConfig.containerPort == port8080) {
+                    val port = loadBalancerV2[index]
+                    loadBalancerV2[index] = LoadBalancerConfig(port.name, port.containerPort, urlPath)
+                    contains8080 = true
+                    return@breaking
+                }
+            }
+            if (!contains8080) {
+                loadBalancerV2.forEachIndexed breaking@{ index, nodePortConfig ->
+                    if (nodePortConfig.containerPort == port80) {
+                        val port = loadBalancerV2[index]
+                        loadBalancerV2[index] = LoadBalancerConfig(port.name, port.containerPort, urlPath)
+                        contains80 = true
+                        return@breaking
+                    }
+                }
+            }
+            if (!contains80 && !contains8080) {
+                val firstPort = loadBalancerV2[0]
+                loadBalancerV2[0] = LoadBalancerConfig(firstPort.name, firstPort.containerPort, urlPath)
+            }
+        }
+        return Service(
+            enabled,
+            loadBalancer = loadBalancerV2
+        )
+    }
+    throw IllegalArgumentException(
+        "When ingress.urlPath is specified, one of nodePort, clusterIP or loadBalancer should also be specified "
+    )
+}
+
+fun ExtendedSettingsV1.toExtendedSettingsV2(): ExtendedSettingsV2 {
+    return ExtendedSettingsV2(
+        envVariables,
+        sharedMemory,
+        replicas,
+        k8sProbes,
+        externalBox,
+        hostAliases,
+        hostNetwork,
+        nodeSelector,
+        mounting,
+        resources,
+        service?.toServiceV2()
+    )
+}
+
+fun ExtendedSettingsV2.toExtendedSettings(): ExtendedSettings {
     return ExtendedSettings(
         envVariables,
         sharedMemory,

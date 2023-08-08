@@ -106,6 +106,10 @@ complexity:
       - 'run'
       - 'use'
       - 'with'
+  CyclomaticComplexMethod:
+    active: true
+    excludes:
+      - '**/fun/ExtendedSettingsExtensions**'
   LabeledExpression:
     active: false
     ignoredLabels: []
@@ -114,7 +118,9 @@ complexity:
     threshold: 600
   LongMethod:
     active: true
-    threshold: 65
+    threshold: 75
+    excludes:
+      - '**/fun/ExtendedSettingsExtensions**'
   LongParameterList:
     active: true
     functionThreshold: 6
@@ -547,6 +553,8 @@ style:
       - '0'
       - '1'
       - '2'
+      - '8080'
+      - '80'
     ignoreHashCodeFunction: true
     ignorePropertyDeclaration: false
     ignoreLocalVariableDeclaration: false
@@ -599,11 +607,13 @@ style:
     active: false
   ReturnCount:
     active: true
-    max: 2
+    max: 3
     excludedFunctions: 'equals'
     excludeLabeled: false
     excludeReturnFromLambda: true
     excludeGuardClauses: false
+    excludes:
+      - '**/fun/ExtendedSettingsExtensions**'
   SafeCast:
     active: true
   SerialVersionUIDInSerializableClass:
@@ -612,7 +622,7 @@ style:
     active: true
   ThrowsCount:
     active: true
-    max: 2
+    max: 3
     excludeGuardClauses: false
   TrailingWhitespace:
     active: false

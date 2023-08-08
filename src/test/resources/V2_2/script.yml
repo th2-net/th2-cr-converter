@@ -39,8 +39,6 @@ spec:
       clusterIP:
         - name: port
           containerPort: 8081
-        - name: port2
+          urlPath: '/path3'
+        - name: por2
           containerPort: 8083
-      ingress:
-        urlPaths:
-          - '/path3'
