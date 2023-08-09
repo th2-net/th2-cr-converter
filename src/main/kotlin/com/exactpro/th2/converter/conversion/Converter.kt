@@ -42,16 +42,18 @@ object Converter {
     fun convertFromGit(
         currentVersion: SchemaVersion,
         targetVersion: SchemaVersion,
-        gitter: Gitter
+        sourceBranchGitter: Gitter,
+        newBranchGitter: Gitter? = null
     ): ConversionResult {
         val summary = ConversionSummary()
-        val repositoryContext = RepositoryContext.load(gitter)
+        val repositoryContext = RepositoryContext.load(sourceBranchGitter)
 
         if (!validateCurrentSchemaVersion(repositoryContext.allResources, currentVersion.apiVersion, summary)) {
             return ConversionResult(summary, emptyList())
         }
 
-        return processSwitching(currentVersion, targetVersion, repositoryContext, summary)
+        val gitter = newBranchGitter ?: sourceBranchGitter
+        return processSwitching(currentVersion, targetVersion, repositoryContext, summary, gitter)
     }
 
     fun convertFromRequest(
@@ -101,7 +103,8 @@ object Converter {
         currentVersion: SchemaVersion,
         targetVersion: SchemaVersion,
         repositoryContext: RepositoryContext,
-        summary: ConversionSummary
+        summary: ConversionSummary,
+        gitter: Gitter? = null,
     ): ConversionResult {
         when (targetVersion) {
             SchemaVersion.V1 -> throw BadRequestException(
@@ -122,6 +125,9 @@ object Converter {
                 val linksInserter = LinksInserter()
                 linksInserter.insertLinksIntoBoxes(convertedResources, repositoryContext.links)
                 linksInserter.addErrorsToSummary(summary)
+                if (gitter != null) {
+                    Repository.removeLinkResources(gitter)
+                }
                 return ConversionResult(summary, convertedResources)
             }
 
@@ -132,14 +138,19 @@ object Converter {
                         val linksInserter = LinksInserter()
                         linksInserter.insertLinksIntoBoxes(convertedResources, repositoryContext.links)
                         linksInserter.addErrorsToSummary(summary)
+                        if (gitter != null) {
+                            Repository.removeLinkResources(gitter)
+                        }
                         val repositoryResourcesV2 = convertedResources.map(Th2Resource::toRepositoryResource)
                         convertedResources = convert<SpecV2>(repositoryResourcesV2, summary)
                         return ConversionResult(summary, convertedResources)
                     }
+
                     SchemaVersion.V2 -> {
                         val convertedResources = convert<SpecV2>(repositoryContext.boxes, summary)
                         return ConversionResult(summary, convertedResources)
                     }
+
                     else -> {
                         throw BadRequestException(
                             ErrorCode.VERSION_NOT_ALLOWED,

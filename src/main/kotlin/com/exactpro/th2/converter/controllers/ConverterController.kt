@@ -60,7 +60,6 @@ class ConverterController {
 
         try {
             gitter.lock()
-            Repository.removeLinkResources(gitter)
             updateRepository(conversionResult.convertedResources, gitter, Repository::update)
             conversionResult.summary.commitRef = gitter.commitAndPush("Schema conversion")
         } finally {
@@ -79,7 +78,8 @@ class ConverterController {
         val gitterContext: GitterContext = GitterContext.getContext(ApplicationConfig.git)
         checkSourceSchema(sourceSchemaName, gitterContext)
         val sourceBranchGitter = gitterContext.getGitter(sourceSchemaName)
-        val conversionResult = convertFromGit(currentVersion, targetVersion, sourceBranchGitter)
+        val newBranchGitter = gitterContext.getGitter(newSchemaName)
+        val conversionResult = convertFromGit(currentVersion, targetVersion, sourceBranchGitter, newBranchGitter)
         val currentResponse = conversionResult.summary
         if (currentResponse.hasErrors()) {
             return currentResponse
@@ -94,12 +94,10 @@ class ConverterController {
             sourceBranchGitter.unlock()
         }
 
-        val newBranchGitter = gitterContext.getGitter(newSchemaName)
         try {
             newBranchGitter.lock()
             newBranchGitter.createBranch(sourceSchemaName)
             updateSchemaK8sPropagation(PROPAGATION_RULE, newBranchGitter)
-            Repository.removeLinkResources(newBranchGitter)
             updateRepository(conversionResult.convertedResources, newBranchGitter, Repository::update)
             conversionResult.summary.commitRef = newBranchGitter.commitAndPush("Schema conversion")
         } catch (e: EntryExistsException) {
