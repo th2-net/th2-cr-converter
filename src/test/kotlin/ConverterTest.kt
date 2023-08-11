@@ -334,7 +334,7 @@ internal class ConverterTest {
     }
 
     /**
-     * v2 conversion to v2.2. check that ingress urlPaths are inserted into service ports
+     * v2 conversion to v2-2. check that ingress urlPaths are inserted into service ports
      */
     @Test
     fun testV2toV2x2Ingress() {
@@ -359,7 +359,7 @@ internal class ConverterTest {
         assertEquals(
             expectedActService,
             actualActService,
-            "Service conversion in act v2 -> v2.2 failed"
+            "Service conversion in act v2 -> v2-2 failed"
         )
 
         val fixServerSpec = boxSpecV2x2FromMap(convertedResMap, "fix-server")
@@ -375,7 +375,7 @@ internal class ConverterTest {
         assertEquals(
             expectedFixServerService,
             actualFixServerService,
-            "Service conversion in fix-server v2 -> v2.2 failed"
+            "Service conversion in fix-server v2 -> v2-2 failed"
         )
 
         val check1Spec = boxSpecV2x2FromMap(convertedResMap, "check1")
@@ -393,7 +393,7 @@ internal class ConverterTest {
         assertEquals(
             expectedCheck1Service,
             actualCheck1Service,
-            "Service conversion in check1 v2 -> v2.2 failed"
+            "Service conversion in check1 v2 -> v2-2 failed"
         )
 
         val scriptSpec = boxSpecV2x2FromMap(convertedResMap, "script")
@@ -411,12 +411,12 @@ internal class ConverterTest {
         assertEquals(
             expectedScriptService,
             actualScriptService,
-            "Service conversion in check1 v2 -> v2.2 failed"
+            "Service conversion in check1 v2 -> v2-2 failed"
         )
     }
 
     /**
-     * v1 conversion to v2.2. check that ingress urlPaths are inserted into service ports
+     * v1 conversion to v2-2. check that ingress urlPaths are inserted into service ports
      */
     @Test
     fun testV1toV2x2Ingress() {
@@ -441,7 +441,7 @@ internal class ConverterTest {
         assertEquals(
             expectedActService,
             actualActService,
-            "Service conversion in act v1 -> v2.2 failed"
+            "Service conversion in act v1 -> v2-2 failed"
         )
 
         val fixServerSpec = boxSpecV2x2FromMap(convertedResMap, "fix-server")
@@ -457,7 +457,7 @@ internal class ConverterTest {
         assertEquals(
             expectedFixServerService,
             actualFixServerService,
-            "Service conversion in fix-server v1 -> v2.2 failed"
+            "Service conversion in fix-server v1 -> v2-2 failed"
         )
 
         val check1Spec = boxSpecV2x2FromMap(convertedResMap, "check1")
@@ -475,7 +475,7 @@ internal class ConverterTest {
         assertEquals(
             expectedCheck1Service,
             actualCheck1Service,
-            "Service conversion in check1 v1 -> v2.2 failed"
+            "Service conversion in check1 v1 -> v2-2 failed"
         )
 
         val scriptSpec = boxSpecV2x2FromMap(convertedResMap, "script")
@@ -493,7 +493,7 @@ internal class ConverterTest {
         assertEquals(
             expectedScriptService,
             actualScriptService,
-            "Service conversion in check1 v1 -> v2.2 failed"
+            "Service conversion in check1 v1 -> v2-2 failed"
         )
     }
 

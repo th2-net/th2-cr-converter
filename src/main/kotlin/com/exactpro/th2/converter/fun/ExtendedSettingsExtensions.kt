@@ -81,7 +81,7 @@ fun ServiceV2.toService(): Service {
         )
     }
     assert(ingress!!.urlPaths!!.size == 1) {
-        "Service can't be upgraded to version v2.2. 'ingress.urlPaths' must contain 1 item"
+        "Service can't be upgraded to version v2-2. 'ingress.urlPaths' must contain 1 item"
     }
 
     val multiConfigErrorMessage =

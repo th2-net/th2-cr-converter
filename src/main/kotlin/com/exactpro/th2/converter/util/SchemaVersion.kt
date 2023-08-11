@@ -17,7 +17,7 @@
 package com.exactpro.th2.converter.util
 
 enum class SchemaVersion(val apiVersion: String, val nextVersion: SchemaVersion?) {
-    V2_2("th2.exactpro.com/v2.2", null),
+    V2_2("th2.exactpro.com/v2-2", null),
     V2("th2.exactpro.com/v2", V2_2),
     V1("th2.exactpro.com/v1", V2);
 

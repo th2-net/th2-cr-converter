@@ -154,7 +154,7 @@ object Converter {
                     else -> {
                         throw BadRequestException(
                             ErrorCode.VERSION_NOT_ALLOWED,
-                            """Conversion to v2.2 is only allowed from v1 or v2.specified. 
+                            """Conversion to v2-2 is only allowed from v1 or v2.specified. 
                                         |specified current version: '$currentVersion' is not supported
                             """.trimMargin()
                         )
