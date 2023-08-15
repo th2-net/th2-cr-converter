@@ -1,0 +1,20 @@
+name: Build and publish dev-release Java distributions to sonatype.
+
+on:
+  push:
+    tags:
+      - \d+.\d+.\d+-dev
+
+jobs:
+  build:
+    uses: th2-net/.github/.github/workflows/compound-java.yml@main
+    with:
+#     java 11 version is used only as maven dependency
+      build-target: 'Sonatype'
+      runsOn: ubuntu-latest
+      devRelease: true
+    secrets:
+      sonatypeUsername: ${{ secrets.SONATYPE_NEXUS_USERNAME }}
+      sonatypePassword: ${{ secrets.SONATYPE_NEXUS_PASSWORD }}
+      sonatypeSigningKey: ${{ secrets.SONATYPE_GPG_ARMORED_KEY }}
+      sonatypeSigningPassword: ${{ secrets.SONATYPE_SIGNING_PASSWORD }}

@@ -3,20 +3,18 @@ name: Dev build and publish Java distributions to sonatype snapshot repository a
 on:
   push:
     branches-ignore:
-      - master
+      - java-11
       - version-*
 
 jobs:
   build-job:
     uses: th2-net/.github/.github/workflows/compound-java-dev.yml@main
     with:
-      build-target: 'Sonatype,Docker'
+#     java 11 version is used only as maven dependency
+      build-target: 'Sonatype'
       runsOn: ubuntu-latest
-      docker-username: ${{ github.actor }}
-      javaVersion: '11'
     secrets:
       sonatypeUsername: ${{ secrets.SONATYPE_NEXUS_USERNAME }}
       sonatypePassword: ${{ secrets.SONATYPE_NEXUS_PASSWORD }}
       sonatypeSigningKey: ${{ secrets.SONATYPE_GPG_ARMORED_KEY }}
       sonatypeSigningPassword: ${{ secrets.SONATYPE_SIGNING_PASSWORD }}
-      docker-password: ${{ secrets.GITHUB_TOKEN }}

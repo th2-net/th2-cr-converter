@@ -1,3 +1,6 @@
+import com.github.jk1.license.filter.LicenseBundleNormalizer
+import com.github.jk1.license.render.JsonReportRenderer
+
 plugins {
     id "org.jetbrains.kotlin.jvm" version "${kotlin_version}"
     id "org.jetbrains.kotlin.kapt" version "${kotlin_version}"
@@ -11,6 +14,8 @@ plugins {
     id 'signing'
     id 'distribution'
     id "org.owasp.dependencycheck" version "${owaspVersion}"
+    id 'com.github.jk1.dependency-license-report' version "${licenseReportVersion}"
+    id "de.undercouch.download" version "${downloadVersion}"
 }
 
 ext {
@@ -24,7 +29,6 @@ ext {
     junit_jupiter_version = '5.9.2'
     commons_text_version = '1.10.0'
     okhttp_version = '4.10.0'
-    sharedDir = file("${project.rootDir}/shared")
 }
 
 apply plugin: 'kotlin'
@@ -47,7 +51,7 @@ repositories {
         url 'https://s01.oss.sonatype.org/content/repositories/releases/'
     }
 
-    configurations.all {
+    configurations.configureEach {
         resolutionStrategy.cacheChangingModulesFor 0, 'seconds'
         resolutionStrategy.cacheDynamicVersionsFor 0, 'seconds'
     }
@@ -124,7 +128,7 @@ jar {
 }
 
 // conditionals for publications
-tasks.withType(PublishToMavenRepository) {
+tasks.withType(PublishToMavenRepository).configureEach {
     onlyIf {
         (repository == publishing.repositories.nexusRepository &&
                 project.hasProperty('nexus_user') &&
@@ -132,12 +136,11 @@ tasks.withType(PublishToMavenRepository) {
                 project.hasProperty('nexus_url')) ||
                 (repository == publishing.repositories.sonatype &&
                         project.hasProperty('sonatypeUsername') &&
-                        project.hasProperty('sonatypePassword')) ||
-                (repository == publishing.repositories.localRepo)
+                        project.hasProperty('sonatypePassword'))
     }
 }
 
-tasks.withType(Sign) {
+tasks.withType(Sign).configureEach {
     onlyIf {
         project.hasProperty('signingKey') &&
                 project.hasProperty('signingPassword')
@@ -145,8 +148,8 @@ tasks.withType(Sign) {
 }
 
 // disable running task 'initializeSonatypeStagingRepository' on a gitlab
-tasks.whenTaskAdded { task ->
-    if (task.name.equals('initializeSonatypeStagingRepository') &&
+tasks.configureEach { task ->
+    if (task.name == 'initializeSonatypeStagingRepository' &&
             !(project.hasProperty('sonatypeUsername') && project.hasProperty('sonatypePassword'))
     ) {
         task.enabled = false
@@ -185,10 +188,6 @@ publishing {
         }
     }
     repositories {
-        maven {
-            name = 'localRepo'
-            url = sharedDir
-        }
         //Nexus repo to publish from gitlab
         maven {
             name = 'nexusRepository'
@@ -211,16 +210,11 @@ nexusPublishing {
 }
 
 signing {
-    def signingKey = findProperty("signingKey")
-    def signingPassword = findProperty("signingPassword")
+    String signingKey = findProperty("signingKey")
+    String signingPassword = findProperty("signingPassword")
     useInMemoryPgpKeys(signingKey, signingPassword)
     sign publishing.publications.mavenJava
 }
-
-clean {
-    delete sharedDir
-}
-
 
 detekt {
     buildUponDefaultConfig = true
@@ -248,4 +242,25 @@ configurations {
     compileClasspath {
         resolutionStrategy.activateDependencyLocking()
     }
+}
+
+licenseReport {
+    def licenseNormalizerBundlePath = "$buildDir/license-normalizer-bundle.json"
+
+    if (!file(licenseNormalizerBundlePath).exists()) {
+        download.run {
+            src 'https://raw.githubusercontent.com/th2-net/.github/main/license-compliance/gradle-license-report/license-normalizer-bundle.json'
+            dest "$buildDir/license-normalizer-bundle.json"
+            overwrite false
+        }
+    }
+
+    filters = [
+            new LicenseBundleNormalizer(licenseNormalizerBundlePath, false)
+    ]
+    renderers = [
+            new JsonReportRenderer('licenses.json', false),
+    ]
+    excludeOwnGroup = false
+    allowedLicensesFile = new URL("https://raw.githubusercontent.com/th2-net/.github/main/license-compliance/gradle-license-report/allowed-licenses.json")
 }
