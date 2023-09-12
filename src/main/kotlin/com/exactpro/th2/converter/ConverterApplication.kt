@@ -25,6 +25,8 @@ open class ConverterApplication
 
 private val logger = KotlinLogging.logger {}
 
+private const val LOCAL_USAGE: String = "Usage: local <branch or directory with schemas> <current version> <target version>"
+
 fun main(args: Array<String>) {
     when (val mode = if (args.isNotEmpty()) args[0] else "server") {
         "server" -> {
@@ -41,8 +43,9 @@ fun main(args: Array<String>) {
             }
         }
         "local" -> {
-            val currentVersion = enumValueOf<SchemaVersion>(args[1])
-            val targetVersion = enumValueOf<SchemaVersion>(args[2])
+            require(args.size == 4) { LOCAL_USAGE }
+            val currentVersion: SchemaVersion = getEnumValue(args[2])
+            val targetVersion: SchemaVersion = getEnumValue(args[3])
             LocalFilesConverter(args[1], currentVersion, targetVersion).convert()
         }
         else -> {
@@ -50,3 +53,7 @@ fun main(args: Array<String>) {
         }
     }
 }
+
+private fun getEnumValue(name: String): SchemaVersion =
+    SchemaVersion.values().find { it.name.equals(name, ignoreCase = true) }
+        ?: error("unknown schema version $name")
