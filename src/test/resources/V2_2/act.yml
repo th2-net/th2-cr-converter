@@ -25,9 +25,7 @@ spec:
         - name: grpc
           containerPort: 8080
           exposedPort: 30741
-      ingress:
-        urlPaths:
-          - '/path1'
+          urlPath: '/path1'
   pins:
     mq:
       subscribers:

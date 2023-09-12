@@ -50,9 +50,15 @@ spec:
       enabled: true
       type: NodePort
       endpoints:
+        - name: 'port2'
+          targetPort: 80
+          nodePort: 30742
         - name: 'grpc'
           targetPort: 8080
           nodePort: 30741
+      ingress:
+        urlPaths:
+          - '/path1'
     envVariables:
       JAVA_TOOL_OPTIONS: "-XX:+ExitOnOutOfMemoryError"
     resources:

@@ -54,10 +54,13 @@ spec:
       enabled: true
       type: LoadBalancer
       endpoints:
-        - name: grpc
-          targetPort: 8080
-        - name: test
+        - name: port2
           targetPort: 8081
+        - name: grpc
+          targetPort: 80
+      ingress:
+        urlPaths:
+          - '/path2'
     envVariables:
       JAVA_TOOL_OPTIONS: '-XX:+ExitOnOutOfMemoryError -XX:+UseContainerSupport -XX:MaxRAMPercentage=85'
     resources:

@@ -17,27 +17,10 @@
 package com.exactpro.th2.converter.`fun`
 
 import com.exactpro.th2.model.latest.box.Spec
-import com.exactpro.th2.model.v2.SpecV2
 
-class ConvertibleBoxSpecV2(val spec: SpecV2) : Convertible {
+class ConvertibleBoxSpecV2x2(val spec: Spec) : Convertible {
     override fun toNextVersion(): Convertible {
-        return ConvertibleBoxSpecV2x2(
-            Spec(
-                spec.imageName,
-                spec.imageVersion,
-                spec.type,
-                spec.versionRange,
-                spec.customConfig,
-                spec.extendedSettings?.toExtendedSettings(),
-                spec.pins,
-                spec.prometheus,
-                spec.loggingConfig,
-                spec.mqRouter,
-                spec.grpcRouter,
-                spec.cradleManager,
-                spec.disabled
-            )
-        )
+        throw AssertionError("This is the latest version. Further conversions are not supported")
     }
 
     override fun getSpecObject(): Any {

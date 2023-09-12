@@ -22,10 +22,10 @@ import com.exactpro.th2.converter.`fun`.ConvertibleBoxSpecV2
 import com.exactpro.th2.converter.model.Th2Resource
 import com.exactpro.th2.converter.util.Mapper.YAML_MAPPER
 import com.exactpro.th2.infrarepo.repo.RepositoryResource
-import com.exactpro.th2.model.latest.box.Spec
 import com.exactpro.th2.model.latest.link.LinkEndpoint
 import com.exactpro.th2.model.v1.link.LinkSpecV1
 import com.exactpro.th2.model.v1.link.MultiDictionary
+import com.exactpro.th2.model.v2.SpecV2
 import com.fasterxml.jackson.module.kotlin.convertValue
 import com.fasterxml.jackson.module.kotlin.readValue
 import java.util.regex.Pattern
@@ -122,7 +122,7 @@ class LinksInserter {
         resToLinkMap.forEach { (key, value) ->
             if (convertedResourcesMap.containsKey(key)) {
                 val resource = convertedResourcesMap[key]
-                val spec: Spec = YAML_MAPPER.convertValue(resource!!.spec)
+                val spec: SpecV2 = YAML_MAPPER.convertValue(resource!!.spec)
                 val mqPinMap = spec.pins?.mq?.subscribers?.associateBy { it.name }
                 val grpcPinMap = spec.pins?.grpc?.client?.associateBy { it.name }
                 value.forEach { (key, value) ->
@@ -144,7 +144,7 @@ class LinksInserter {
         }
     }
 
-    private fun insertDictionariesAsAliases(spec: Spec, multiDictionaries: MutableList<MultiDictionary>) {
+    private fun insertDictionariesAsAliases(spec: SpecV2, multiDictionaries: MutableList<MultiDictionary>) {
         val customConfigStr = YAML_MAPPER.writeValueAsString(spec.customConfig)
         val patternStr: StringBuilder = StringBuilder()
         val dictionary: MutableMap<String, String> = HashMap()

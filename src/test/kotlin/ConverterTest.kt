@@ -14,24 +14,23 @@
  * limitations under the License.
  */
 
-import com.exactpro.th2.converter.controllers.errors.BadRequestException
 import com.exactpro.th2.converter.conversion.Converter
 import com.exactpro.th2.converter.`fun`.ConvertibleBoxSpecV2
+import com.exactpro.th2.converter.`fun`.ConvertibleBoxSpecV2x2
 import com.exactpro.th2.converter.model.Th2Resource
 import com.exactpro.th2.converter.util.Mapper.YAML_MAPPER
+import com.exactpro.th2.converter.util.SchemaVersion
 import com.exactpro.th2.infrarepo.repo.RepositoryResource
-import com.exactpro.th2.model.latest.box.Spec
 import com.exactpro.th2.model.latest.box.pins.PinSpec
 import com.exactpro.th2.model.v1.box.SpecV1
 import com.exactpro.th2.model.v1.box.pins.PinSpecV1
 import com.exactpro.th2.model.v1.box.pins.PinType
+import com.exactpro.th2.model.v2.SpecV2
 import com.fasterxml.jackson.module.kotlin.convertValue
 import io.fabric8.kubernetes.api.model.ObjectMeta
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
-import org.junit.jupiter.api.assertThrows
 import java.io.File
-import java.util.*
 import kotlin.test.DefaultAsserter.assertTrue
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -51,6 +50,8 @@ internal class ConverterTest {
     private val actV2 = readV2RepoResource(ACT)
 
     private val check1V1 = readV1RepoResource(CHECK1)
+
+    private val check1V2 = readV2RepoResource(CHECK1)
 
     private val fixServerV1 = readV1RepoResource(FIX_SERVER)
 
@@ -81,7 +82,7 @@ internal class ConverterTest {
      */
     @Test
     fun testPinsConversionToV2FromRequest() {
-        val convertedTh2ResList = Converter.convertFromRequest("v2", repoV1BoxesFullSet)
+        val convertedTh2ResList = Converter.convertFromRequest(SchemaVersion.V1, SchemaVersion.V2, repoV1BoxesFullSet)
             .convertedResources
             .sortedBy { it.metadata.name }
 
@@ -159,15 +160,19 @@ internal class ConverterTest {
         val sampleResSet = setOf(scriptV1, links1, links2)
 
         val failMessage = "script conversion v1 -> v2 failed"
-        val actualConvertedList = Converter.convertFromRequest("v2", sampleResSet).convertedResources
+        val actualConvertedList = Converter.convertFromRequest(
+            SchemaVersion.V1,
+            SchemaVersion.V2,
+            sampleResSet
+        ).convertedResources
         val actualConvertedScript = actualConvertedList
             .find { it.metadata.name == "script" } as Th2Resource
-        var expectedConvertedScriptSpec: Spec? = null
+        var expectedConvertedScriptSpec: SpecV2? = null
         assertDoesNotThrow("$failMessage: Spec structure or naming is incorrect") {
             expectedConvertedScriptSpec = YAML_MAPPER.convertValue(scriptV2.spec)
         }
         val expectedConvertedScript = Th2Resource(
-            scriptV2.apiVersion,
+            SchemaVersion.fromApiVersion(scriptV2.apiVersion),
             scriptV2.kind,
             scriptV2.metadata,
             ConvertibleBoxSpecV2(expectedConvertedScriptSpec!!)
@@ -184,35 +189,30 @@ internal class ConverterTest {
 
     /**
      * Tests Converter.convertFromRequest(targetVersion, resources).
-     * Tests scenarios where we specify unsupported version
-     * And when we specify the supported one
-     */
-    @Test
-    fun testConvertFromRequestTargetVersion() {
-        assertThrows<BadRequestException>("Function didn't throw Exception when specified unsupported version") {
-            Converter.convertFromRequest("v4", repoV1BoxesFullSet)
-        }
-        assertDoesNotThrow("Function threw Exception when specified supported version") {
-            Converter.convertFromRequest("v2", repoV1BoxesFullSet)
-        }
-    }
-
-    /**
-     * Tests Converter.convertFromRequest(targetVersion, resources).
      * From V1 to V2.
      * Service subsection(of extendedSettings) conversion
      */
     @Test
     fun testServiceConversionToV2FromRequest() {
-        val convertedResMap = convertFromRequestAsMap("v2", setOf(actV1, fixServerV1, check1V1))
+        val convertedResMap = convertFromRequestAsMap(
+            SchemaVersion.V1,
+            SchemaVersion.V2,
+            setOf(actV1, fixServerV1, check1V1)
+        )
         val actSpec = boxSpecV2FromMap(convertedResMap, "act")
         val actualActService = YAML_MAPPER.writeValueAsString(actSpec.spec.extendedSettings?.service)
         val expectedActService = """
             enabled: true
             nodePort:
+            - name: port2
+              containerPort: 80
+              exposedPort: 30742
             - name: grpc
               containerPort: 8080
               exposedPort: 30741
+            ingress:
+              urlPaths:
+              - /path1
         """.trimIndent().plus("\n")
 
         assertEquals(
@@ -228,6 +228,9 @@ internal class ConverterTest {
             clusterIP:
             - name: other
               containerPort: 8080
+            ingress:
+              urlPaths:
+              - /path4
         """.trimIndent().plus("\n")
 
         assertEquals(
@@ -241,10 +244,13 @@ internal class ConverterTest {
         val expectedCheck1Service = """
             enabled: true
             loadBalancer:
-            - name: grpc
-              containerPort: 8080
-            - name: test
+            - name: port2
               containerPort: 8081
+            - name: grpc
+              containerPort: 80
+            ingress:
+              urlPaths:
+              - /path2
         """.trimIndent().plus("\n")
 
         assertEquals(
@@ -264,7 +270,7 @@ internal class ConverterTest {
         val repoV1AllResourcesSet = HashSet(repoV1BoxesFullSet)
         repoV1AllResourcesSet.add(links1)
         repoV1AllResourcesSet.add(links2)
-        val convertedResMap = convertFromRequestAsMap("v2", repoV1AllResourcesSet)
+        val convertedResMap = convertFromRequestAsMap(SchemaVersion.V1, SchemaVersion.V2, repoV1AllResourcesSet)
 
         val actualFixServerSpec = boxSpecV2FromMap(convertedResMap, "fix-server")
         val actualFixServerLinks = actualFixServerSpec.spec.pins?.mq?.subscribers
@@ -312,7 +318,7 @@ internal class ConverterTest {
     @Test
     fun testV2DictionaryLinksInBoxes() {
         val repoV1ResourceSet = setOf(scriptV1, dictionaryLinks)
-        val convertedResMap = convertFromRequestAsMap("v2", repoV1ResourceSet)
+        val convertedResMap = convertFromRequestAsMap(SchemaVersion.V1, SchemaVersion.V2, repoV1ResourceSet)
 
         val expectedScriptSpec = readV2ResourceSpec(scriptV2)
         val expectedScriptCustomCfg: MutableMap<String, Any>? = expectedScriptSpec.customConfig
@@ -327,11 +333,182 @@ internal class ConverterTest {
         )
     }
 
+    /**
+     * v2 conversion to v2-2. check that ingress urlPaths are inserted into service ports
+     */
+    @Test
+    fun testV2toV2x2Ingress() {
+        val convertedResMap = convertFromRequestAsMap(
+            SchemaVersion.V2,
+            SchemaVersion.V2_2,
+            setOf(actV2, check1V2, fixServerV2, scriptV2)
+        )
+        val actSpec = boxSpecV2x2FromMap(convertedResMap, "act")
+        val actualActService = YAML_MAPPER.writeValueAsString(actSpec.spec.extendedSettings?.service)
+        val expectedActService = """
+            enabled: true
+            nodePort:
+            - name: port2
+              containerPort: 80
+              exposedPort: 30742
+            - name: grpc
+              containerPort: 8080
+              exposedPort: 30741
+              urlPath: /path1
+        """.trimIndent().plus("\n")
+        assertEquals(
+            expectedActService,
+            actualActService,
+            "Service conversion in act v2 -> v2-2 failed"
+        )
+
+        val fixServerSpec = boxSpecV2x2FromMap(convertedResMap, "fix-server")
+        val actualFixServerService = YAML_MAPPER.writeValueAsString(fixServerSpec.spec.extendedSettings?.service)
+        val expectedFixServerService = """
+            enabled: true
+            clusterIP:
+            - name: other
+              containerPort: 8080
+              urlPath: /path4
+        """.trimIndent().plus("\n")
+
+        assertEquals(
+            expectedFixServerService,
+            actualFixServerService,
+            "Service conversion in fix-server v2 -> v2-2 failed"
+        )
+
+        val check1Spec = boxSpecV2x2FromMap(convertedResMap, "check1")
+        val actualCheck1Service = YAML_MAPPER.writeValueAsString(check1Spec.spec.extendedSettings?.service)
+        val expectedCheck1Service = """
+            enabled: true
+            loadBalancer:
+            - name: port2
+              containerPort: 8081
+            - name: grpc
+              containerPort: 80
+              urlPath: /path2
+        """.trimIndent().plus("\n")
+
+        assertEquals(
+            expectedCheck1Service,
+            actualCheck1Service,
+            "Service conversion in check1 v2 -> v2-2 failed"
+        )
+
+        val scriptSpec = boxSpecV2x2FromMap(convertedResMap, "script")
+        val actualScriptService = YAML_MAPPER.writeValueAsString(scriptSpec.spec.extendedSettings?.service)
+        val expectedScriptService = """
+            enabled: false
+            clusterIP:
+            - name: port
+              containerPort: 8081
+              urlPath: /path3
+            - name: port2
+              containerPort: 8083
+        """.trimIndent().plus("\n")
+
+        assertEquals(
+            expectedScriptService,
+            actualScriptService,
+            "Service conversion in check1 v2 -> v2-2 failed"
+        )
+    }
+
+    /**
+     * v1 conversion to v2-2. check that ingress urlPaths are inserted into service ports
+     */
+    @Test
+    fun testV1toV2x2Ingress() {
+        val convertedResMap = convertFromRequestAsMap(
+            SchemaVersion.V1,
+            SchemaVersion.V2_2,
+            setOf(actV1, check1V1, fixServerV1, scriptV1)
+        )
+        val actSpec = boxSpecV2x2FromMap(convertedResMap, "act")
+        val actualActService = YAML_MAPPER.writeValueAsString(actSpec.spec.extendedSettings?.service)
+        val expectedActService = """
+            enabled: true
+            nodePort:
+            - name: port2
+              containerPort: 80
+              exposedPort: 30742
+            - name: grpc
+              containerPort: 8080
+              exposedPort: 30741
+              urlPath: /path1
+        """.trimIndent().plus("\n")
+        assertEquals(
+            expectedActService,
+            actualActService,
+            "Service conversion in act v1 -> v2-2 failed"
+        )
+
+        val fixServerSpec = boxSpecV2x2FromMap(convertedResMap, "fix-server")
+        val actualFixServerService = YAML_MAPPER.writeValueAsString(fixServerSpec.spec.extendedSettings?.service)
+        val expectedFixServerService = """
+            enabled: true
+            clusterIP:
+            - name: other
+              containerPort: 8080
+              urlPath: /path4
+        """.trimIndent().plus("\n")
+
+        assertEquals(
+            expectedFixServerService,
+            actualFixServerService,
+            "Service conversion in fix-server v1 -> v2-2 failed"
+        )
+
+        val check1Spec = boxSpecV2x2FromMap(convertedResMap, "check1")
+        val actualCheck1Service = YAML_MAPPER.writeValueAsString(check1Spec.spec.extendedSettings?.service)
+        val expectedCheck1Service = """
+            enabled: true
+            loadBalancer:
+            - name: port2
+              containerPort: 8081
+            - name: grpc
+              containerPort: 80
+              urlPath: /path2
+        """.trimIndent().plus("\n")
+
+        assertEquals(
+            expectedCheck1Service,
+            actualCheck1Service,
+            "Service conversion in check1 v1 -> v2-2 failed"
+        )
+
+        val scriptSpec = boxSpecV2x2FromMap(convertedResMap, "script")
+        val actualScriptService = YAML_MAPPER.writeValueAsString(scriptSpec.spec.extendedSettings?.service)
+        val expectedScriptService = """
+            enabled: false
+            clusterIP:
+            - name: port
+              containerPort: 8081
+              urlPath: /path3
+            - name: port2
+              containerPort: 8083
+        """.trimIndent().plus("\n")
+
+        assertEquals(
+            expectedScriptService,
+            actualScriptService,
+            "Service conversion in check1 v1 -> v2-2 failed"
+        )
+    }
+
     private fun boxSpecV2FromMap(convertedResMap: Map<String, Th2Resource>, resName: String) =
         convertedResMap[resName]?.specWrapper as ConvertibleBoxSpecV2
 
-    private fun convertFromRequestAsMap(toVersion: String, resSet: Set<RepositoryResource>): Map<String, Th2Resource> {
-        val convertedTh2ResList = Converter.convertFromRequest(toVersion, resSet).convertedResources
+    private fun boxSpecV2x2FromMap(convertedResMap: Map<String, Th2Resource>, resName: String) =
+        convertedResMap[resName]?.specWrapper as ConvertibleBoxSpecV2x2
+
+    private fun convertFromRequestAsMap(
+        currentVersion: SchemaVersion,
+        targetVersion: SchemaVersion,
+        resSet: Set<RepositoryResource>
+    ): Map<String, Th2Resource> {
+        val convertedTh2ResList = Converter.convertFromRequest(currentVersion, targetVersion, resSet).convertedResources
         return convertedTh2ResList.associateBy { it.metadata.name }
     }
 
@@ -342,8 +519,8 @@ internal class ConverterTest {
         )
     }
 
-    private fun readV2ResourceSpec(res: RepositoryResource): Spec {
-        return YAML_MAPPER.convertValue(res.spec, Spec::class.java)
+    private fun readV2ResourceSpec(res: RepositoryResource): SpecV2 {
+        return YAML_MAPPER.convertValue(res.spec, SpecV2::class.java)
     }
 
     private fun readV1RepoResource(fileName: String): RepositoryResource {

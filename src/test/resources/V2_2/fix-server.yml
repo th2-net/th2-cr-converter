@@ -68,12 +68,10 @@ spec:
         memory: 100Mi
     service:
       enabled: true
-      clusterIP:
+      loadBalancer:
         - name: other
           containerPort: 8080
-      ingress:
-        urlPaths:
-          - '/path4'
+          urlPath: '/path4'
   pins:
     mq:
       subscribers:

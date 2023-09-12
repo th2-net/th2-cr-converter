@@ -27,14 +27,14 @@ spec:
         memory: 100Mi
     service:
       enabled: true
-      loadBalancer:
+      nodePort:
         - name: port2
           containerPort: 8081
+          exposedPort: 30745
         - name: grpc
           containerPort: 80
-      ingress:
-        urlPaths:
-          - '/path2'
+          exposedPort: 30746
+          urlPath: '/path2'
   pins:
     mq:
       subscribers:

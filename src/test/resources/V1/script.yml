@@ -27,3 +27,12 @@ spec:
       enabled: true
     service:
       enabled: false
+      type: ClusterIP
+      endpoints:
+        - name: 'port'
+          targetPort: 8081
+        - name: 'port2'
+          targetPort: 8083
+      ingress:
+        urlPaths:
+          - '/path3'
