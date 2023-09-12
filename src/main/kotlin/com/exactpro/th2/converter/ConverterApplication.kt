@@ -25,7 +25,13 @@ open class ConverterApplication
 
 private val logger = KotlinLogging.logger {}
 
-private const val LOCAL_USAGE: String = "Usage: local <branch or directory with schemas> <current version> <target version>"
+private const val LOCAL_USAGE: String =
+    "Usage: local <branch or directory with schemas> <current version> <target version>"
+
+private const val ARGUMENTS_SIZE = 4
+private const val SCHEMA_INDEX = 1
+private const val CURRENT_VERSION_INDEX = 2
+private const val TARGET_VERSION_INDEX = 3
 
 fun main(args: Array<String>) {
     when (val mode = if (args.isNotEmpty()) args[0] else "server") {
@@ -43,10 +49,10 @@ fun main(args: Array<String>) {
             }
         }
         "local" -> {
-            require(args.size == 4) { LOCAL_USAGE }
-            val currentVersion: SchemaVersion = getEnumValue(args[2])
-            val targetVersion: SchemaVersion = getEnumValue(args[3])
-            LocalFilesConverter(args[1], currentVersion, targetVersion).convert()
+            require(args.size == ARGUMENTS_SIZE) { LOCAL_USAGE }
+            val currentVersion: SchemaVersion = getEnumValue(args[CURRENT_VERSION_INDEX])
+            val targetVersion: SchemaVersion = getEnumValue(args[TARGET_VERSION_INDEX])
+            LocalFilesConverter(args[SCHEMA_INDEX], currentVersion, targetVersion).convert()
         }
         else -> {
             logger.error("Mode: {} is not supported", mode)

@@ -120,8 +120,8 @@ data class RepositoryContext(
 
     companion object {
         fun load(gitter: Gitter): RepositoryContext {
+            gitter.lock()
             try {
-                gitter.lock()
                 val boxes = HashSet(Repository.getAllBoxesAndStores(gitter))
                 val links = HashSet(Repository.getResourcesByKind(gitter, ResourceType.Th2Link))
                 return RepositoryContext(boxes, links)
