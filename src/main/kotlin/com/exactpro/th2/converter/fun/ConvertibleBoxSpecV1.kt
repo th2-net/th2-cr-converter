@@ -43,7 +43,8 @@ class ConvertibleBoxSpecV1(val spec: SpecV1) : Convertible {
                 spec.mqRouter,
                 spec.grpcRouter,
                 spec.cradleManager,
-                spec.disabled
+                spec.disabled,
+                imagePullSecrets = spec.imagePullSecrets,
             )
         )
     }
